@@ -44,6 +44,7 @@ watch(
   },
 )
 
+
 watch(searchQuery, (query) => {
   if (searchTimer.value) {
     clearTimeout(searchTimer.value)
@@ -58,6 +59,7 @@ watch(searchQuery, (query) => {
     try {
       loading.value = true
       const result = await ProductService.findProduct(query)
+      console.log(result)
       products.value = Array.isArray(result) ? result : [result]
     } catch (e) {
       products.value = []
