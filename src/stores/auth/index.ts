@@ -67,7 +67,7 @@ export const useAuthStore = defineStore('Auth', () => {
     try {
       isLoading.value = true
       const token = await AuthService.loginUser(body)
-      setToken(token?.token ?? '')
+      setToken(token ?? '')
       await initStore()
       await router.push({ name: 'dashboard' })
     } catch (error: any) {

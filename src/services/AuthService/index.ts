@@ -2,8 +2,8 @@ import { api } from '@/api/api'
 import type { AuthRequest, AuthResponse, UserInfoResponse } from '@/utils/types/api/generatedApiGo'
 
 export default class AuthService {
-  public static async loginUser(payload: AuthRequest): Promise<AuthResponse> {
-    const { data }: any = await api.post('/auth/login', payload)
+  public static async loginUser(payload: AuthRequest): Promise<string | undefined> {
+    const { data }: any = await api.post<AuthRequest, AuthResponse>('/auth/login', payload)
     return data.token
   }
 

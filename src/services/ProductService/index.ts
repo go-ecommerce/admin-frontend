@@ -28,7 +28,7 @@ export default class ProductService {
     return data
   }
 
-  public static async findProduct(query: String): Promise<ProductResponse> {
+  public static async findProduct(query: String): Promise<ProductResponse[]> {
     const { data }: any = await api.get(`/product/find`, {
       product: query,
     })

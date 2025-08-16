@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/stores/auth'
 import type { AuthRequest } from '@/utils/types/api/generatedApiGo'
 
+// todo добавить лоудер на загрузку
 const { isLoading } = storeToRefs(useAuthStore())
 const { login } = useAuthStore()
 

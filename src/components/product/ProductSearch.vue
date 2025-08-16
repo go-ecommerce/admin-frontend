@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
+
 import { ref, watch } from 'vue'
+
 import { Button } from '@/components/ui/button'
 import {
   Command,
@@ -8,19 +10,17 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList
+  CommandList,
 } from '@/components/ui/command'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import ProductService from '@/services/ProductService'
 import type { ProductResponse } from '@/utils/types/api/generatedApiGo'
+import { watchDebounced } from '@vueuse/core'
+import type { SelectEvent } from 'radix-vue/dist/Listbox/ListboxItem'
+import type { AcceptableValue } from 'reka-ui'
 
 const props = defineProps<{
-  modelValue?: ProductResponse
+  modelValue?: ProductResponse[]
 }>()
 
 const emit = defineEmits<{
@@ -31,50 +31,53 @@ const emit = defineEmits<{
 const open = ref(false)
 const value = ref<ProductResponse>()
 
-const selectedProduct = ref<ProductResponse | undefined>(props.modelValue)
+const selectedProducts = ref<ProductResponse[] | undefined>(props.modelValue)
 const searchQuery = ref('')
 const products = ref<ProductResponse[]>([])
 const loading = ref(false)
-const searchTimer = ref<number | null>(null)
 
 watch(
   () => props.modelValue,
   (newValue) => {
-    selectedProduct.value = newValue
+    selectedProducts.value = newValue
   },
 )
 
-
-watch(searchQuery, (query) => {
-  if (searchTimer.value) {
-    clearTimeout(searchTimer.value)
-  }
-
-  searchTimer.value = setTimeout(async () => {
-    if (!query) {
+watchDebounced(
+  searchQuery,
+  async (query) => {
+    if (!query.trim()) {
       products.value = []
       return
     }
 
     try {
       loading.value = true
-      const result = await ProductService.findProduct(query)
-      console.log(result)
-      products.value = Array.isArray(result) ? result : [result]
+      products.value = (await ProductService.findProduct(query)).filter((product) => !selectedProducts.value?.find((selectedProduct) => selectedProduct.id === product.id))
     } catch (e) {
       products.value = []
       console.error(e)
     } finally {
       loading.value = false
     }
-  }, 300)
-})
+  },
+  { debounce: 300 },
+)
+
+const onProductSelect = (selectedProduct: SelectEvent<AcceptableValue>): void => {
+  console.log(selectedProduct)
+}
 </script>
 
 <template>
-  <Popover v-model:open="open">
+  <Popover v-model:open="open" >
     <PopoverTrigger as-child>
-      <Button variant="outline" role="combobox" :aria-expanded="open" class="w-[200px] justify-between">
+      <Button
+        variant="outline"
+        role="combobox"
+        :aria-expanded="open"
+        class="w-[200px] justify-between"
+      >
         Select product...
         <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
@@ -85,7 +88,12 @@ watch(searchQuery, (query) => {
         <CommandEmpty>No framework found.</CommandEmpty>
         <CommandList>
           <CommandGroup>
-            <CommandItem v-for="product in products" :key="product.id" :value="product" @select="open = false">
+            <CommandItem
+              v-for="product in products"
+              :key="product.id"
+              :value="product"
+              @select="onProductSelect($event)"
+            >
               {{ product.name }}
             </CommandItem>
           </CommandGroup>

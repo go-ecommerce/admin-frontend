@@ -6,9 +6,11 @@ import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import CollectionForm from '@/components/collection/CollectionForm.vue'
+import DataTable from '@/components/data-table/DataTable.vue'
 import ProductSearch from '@/components/product/ProductSearch.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Table, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { useCollectionStore } from '@/stores/collection'
 import type { UpdateCollectionRequest } from '@/utils/types/api/generatedApiGo'
@@ -111,6 +113,8 @@ const updateWithUpload = async () => {
         </CardHeader>
         <CardContent>
           <ProductSearch />
+
+<!--          <div v-for="row in products" :key="row.id" class=""></div> -->
         </CardContent>
       </Card>
     </div>
