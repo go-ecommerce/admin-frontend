@@ -1,23 +1,15 @@
 <script setup lang="ts">
-import { Check, ChevronsUpDown } from 'lucide-vue-next'
+import { watchDebounced } from '@vueuse/core'
+import { ChevronsUpDown } from 'lucide-vue-next'
 
 import { ref, watch } from 'vue'
 
 import { Button } from '@/components/ui/button'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
+import { Command, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import CommandGroupCustom from '@/components/ui/command/CommandGroupCustom.vue'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import ProductService from '@/services/ProductService'
 import type { ProductResponse } from '@/utils/types/api/generatedApiGo'
-import { watchDebounced } from '@vueuse/core'
-import type { SelectEvent } from 'radix-vue/dist/Listbox/ListboxItem'
-import type { AcceptableValue } from 'reka-ui'
 
 const props = defineProps<{
   modelValue?: ProductResponse[]
@@ -53,7 +45,10 @@ watchDebounced(
 
     try {
       loading.value = true
-      products.value = (await ProductService.findProduct(query)).filter((product) => !selectedProducts.value?.find((selectedProduct) => selectedProduct.id === product.id))
+      products.value = (await ProductService.findProduct(query)).filter(
+        (product) =>
+          !selectedProducts.value?.find((selectedProduct) => selectedProduct.id === product.id),
+      )
     } catch (e) {
       products.value = []
       console.error(e)
@@ -64,13 +59,16 @@ watchDebounced(
   { debounce: 300 },
 )
 
-const onProductSelect = (selectedProduct: SelectEvent<AcceptableValue>): void => {
-  console.log(selectedProduct)
+const onProductSelect = (selected: unknown): void => {
+  console.log(selected)
+  emit('select', selected.detail.value)
+
+  selectedProducts.value = [...(selectedProducts.value ?? []), ...selected.detail.value]
 }
 </script>
 
 <template>
-  <Popover v-model:open="open" >
+  <Popover v-model:open="open">
     <PopoverTrigger as-child>
       <Button
         variant="outline"
@@ -83,11 +81,11 @@ const onProductSelect = (selectedProduct: SelectEvent<AcceptableValue>): void =>
       </Button>
     </PopoverTrigger>
     <PopoverContent class="w-[200px] p-0">
-      <Command v-model="value">
+      <Command>
         <CommandInput v-model="searchQuery" placeholder="Search framework..." />
-        <CommandEmpty>No framework found.</CommandEmpty>
+
         <CommandList>
-          <CommandGroup>
+          <CommandGroupCustom>
             <CommandItem
               v-for="product in products"
               :key="product.id"
@@ -96,7 +94,7 @@ const onProductSelect = (selectedProduct: SelectEvent<AcceptableValue>): void =>
             >
               {{ product.name }}
             </CommandItem>
-          </CommandGroup>
+          </CommandGroupCustom>
         </CommandList>
       </Command>
     </PopoverContent>

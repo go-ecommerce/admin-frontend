@@ -1,27 +1,27 @@
 <script setup lang="ts">
+import { reactiveOmit } from '@vueuse/core'
 import { MoreHorizontal } from 'lucide-vue-next'
-import { PaginationEllipsis, type PaginationEllipsisProps } from 'reka-ui'
+import type { PaginationEllipsisProps } from 'reka-ui'
+import { PaginationEllipsis } from 'reka-ui'
 
-import { type HTMLAttributes, computed } from 'vue'
+import type { HTMLAttributes } from 'vue'
 
 import { cn } from '@/lib/utils'
 
 const props = defineProps<PaginationEllipsisProps & { class?: HTMLAttributes['class'] }>()
 
-const delegatedProps = computed(() => {
-  const { class: _, ...delegated } = props
-
-  return delegated
-})
+const delegatedProps = reactiveOmit(props, 'class')
 </script>
 
 <template>
   <PaginationEllipsis
+    data-slot="pagination-ellipsis"
     v-bind="delegatedProps"
-    :class="cn('w-9 h-9 flex items-center justify-center', props.class)"
+    :class="cn('flex size-9 items-center justify-center', props.class)"
   >
     <slot>
-      <MoreHorizontal />
+      <MoreHorizontal class="size-4" />
+      <span class="sr-only">More pages</span>
     </slot>
   </PaginationEllipsis>
 </template>

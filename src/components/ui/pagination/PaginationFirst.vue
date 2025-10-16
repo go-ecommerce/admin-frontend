@@ -1,32 +1,40 @@
 <script setup lang="ts">
-import { ChevronsLeft } from 'lucide-vue-next'
-import { PaginationFirst, type PaginationFirstProps } from 'reka-ui'
+import { reactiveOmit } from '@vueuse/core'
+import { ChevronLeftIcon } from 'lucide-vue-next'
+import type { PaginationFirstProps } from 'reka-ui'
+import { PaginationFirst, useForwardProps } from 'reka-ui'
 
-import { type HTMLAttributes, computed } from 'vue'
+import type { HTMLAttributes } from 'vue'
 
-import { Button } from '@/components/ui/button'
+import type { ButtonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 const props = withDefaults(
-  defineProps<PaginationFirstProps & { class?: HTMLAttributes['class'] }>(),
+  defineProps<
+    PaginationFirstProps & {
+      size?: ButtonVariants['size']
+      class?: HTMLAttributes['class']
+    }
+  >(),
   {
-    asChild: true,
+    size: 'default',
   },
 )
 
-const delegatedProps = computed(() => {
-  const { class: _, ...delegated } = props
-
-  return delegated
-})
+const delegatedProps = reactiveOmit(props, 'class', 'size')
+const forwarded = useForwardProps(delegatedProps)
 </script>
 
 <template>
-  <PaginationFirst v-bind="delegatedProps">
-    <Button :class="cn('w-9 h-9 p-0', props.class)" variant="outline">
-      <slot>
-        <ChevronsLeft />
-      </slot>
-    </Button>
+  <PaginationFirst
+    data-slot="pagination-first"
+    :class="cn(buttonVariants({ variant: 'ghost', size }), 'gap-1 px-2.5 sm:pr-2.5', props.class)"
+    v-bind="forwarded"
+  >
+    <slot>
+      <ChevronLeftIcon />
+      <span class="hidden sm:block">First</span>
+    </slot>
   </PaginationFirst>
 </template>

@@ -5,11 +5,10 @@ import { computed } from 'vue'
 
 import {
   Pagination,
+  PaginationContent,
   PaginationFirst,
   PaginationLast,
-  PaginationList,
   PaginationNext,
-  PaginationPrev,
 } from '@/components/ui/pagination'
 import {
   Select,
@@ -70,7 +69,7 @@ const recordRange = computed(() => {
         {{ recordRange }}
       </span>
       <Pagination :items-per-page="10">
-        <PaginationList class="flex items-center gap-1">
+        <PaginationContent class="flex items-center gap-1">
           <PaginationFirst
             :disabled="!props.table.getCanPreviousPage()"
             @click="props.table.setPageIndex(0)"
@@ -87,7 +86,7 @@ const recordRange = computed(() => {
             :disabled="!props.table.getCanNextPage()"
             @click="props.table.setPageIndex(totalPages - 1)"
           />
-        </PaginationList>
+        </PaginationContent>
       </Pagination>
     </div>
   </div>
