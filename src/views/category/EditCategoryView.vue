@@ -2,7 +2,7 @@
 import { CornerUpLeft, PlusCircle, Trash2 } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import CategoryForm from '@/components/category/CategoryForm.vue'
@@ -17,7 +17,7 @@ import type { MediumResponse, UpdateCategoryRequest } from '@/utils/types/api/ge
 
 // Инициализация хранилища, роутера и toast
 const categoryStore = useCategoryStore()
-const { getCategoryById, updateCategory } = categoryStore
+const { getCategoryById, updateCategory, clearCurrentCategory } = categoryStore
 const { currentCategory } = storeToRefs(categoryStore)
 const route = useRoute()
 const router = useRouter()
@@ -26,14 +26,14 @@ const { toast } = useToast()
 // Типизация файлов
 const files = ref<File[]>([])
 
-// Получение UUID из параметров маршрута
-const uuid = typeof route.params.id === 'string' ? route.params.id : ''
-
 // Базовый URL для хранения файлов (замените на вашу реализацию)
 const fileStorageUrl = import.meta.env.VITE_FILE_STORAGE_URL || 'http://localhost:3000/storage/'
 
-// Загрузка категории при монтировании компонента
-onMounted(async () => {
+// Функция загрузки категории
+const loadCategory = async (uuid: string) => {
+  // Очищаем текущую категорию перед загрузкой новой
+  clearCurrentCategory()
+
   if (uuid) {
     try {
       await getCategoryById(uuid)
@@ -52,7 +52,23 @@ onMounted(async () => {
     })
     router.push({ name: 'category' })
   }
+}
+
+// Загрузка категории при монтировании компонента
+onMounted(() => {
+  const uuid = typeof route.params.id === 'string' ? route.params.id : ''
+  loadCategory(uuid)
 })
+
+// Отслеживание изменения параметра маршрута
+watch(
+  () => route.params.id,
+  (newId) => {
+    const uuid = typeof newId === 'string' ? newId : ''
+    files.value = [] // Очищаем выбранные файлы при смене категории
+    loadCategory(uuid)
+  }
+)
 
 // Обработка изменения файлов
 const handleFilesChange = (newFiles: File[]) => {

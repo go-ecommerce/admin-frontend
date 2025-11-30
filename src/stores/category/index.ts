@@ -103,6 +103,10 @@ export const useCategoryStore = defineStore('category', () => {
     }
   }
 
+  const clearCurrentCategory = (): void => {
+    currentCategory.value = null
+  }
+
   return {
     isLoading,
     categories,
@@ -111,5 +115,6 @@ export const useCategoryStore = defineStore('category', () => {
     getCategoryById,
     createCategory,
     updateCategory,
+    clearCurrentCategory,
   }
 })

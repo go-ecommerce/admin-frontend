@@ -26,9 +26,9 @@ const categoryParentId = ref<string | null>(props.modelValue.parentId || null)
 watch([categoryName, categorySlug, categoryDescription, categoryParentId], () => {
   emit('update:modelValue', {
     ...props.modelValue,
-    name: categoryName.value,
-    slug: categorySlug.value,
-    description: categoryDescription.value,
+    name: categoryName.value.trim() || null,
+    slug: categorySlug.value.trim() || null,
+    description: categoryDescription.value.trim() || null,
     parent_id: categoryParentId.value,
   })
 })

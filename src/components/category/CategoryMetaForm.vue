@@ -12,19 +12,19 @@ const props = defineProps<{
 const emit = defineEmits(['update:modelValue'])
 
 // Локальные refs для полей формы
-const categoryMetaTitle = ref<string>(props.modelValue.metaTitle || '')
-const categoryMetaH1 = ref<string>(props.modelValue.metaH1 || '')
-const categoryMetaKeyword = ref<string>(props.modelValue.metaKeyword || '')
-const categoryMetaDescription = ref<string>(props.modelValue.metaDescription || '')
+const categoryMetaTitle = ref<string>(props.modelValue.meta_title || '')
+const categoryMetaH1 = ref<string>(props.modelValue.meta_h1 || '')
+const categoryMetaKeyword = ref<string>(props.modelValue.meta_keyword || '')
+const categoryMetaDescription = ref<string>(props.modelValue.meta_description || '')
 
 // Обновляем modelValue при изменении полей
 watch([categoryMetaTitle, categoryMetaH1, categoryMetaKeyword, categoryMetaDescription], () => {
   emit('update:modelValue', {
     ...props.modelValue,
-    meta_title: categoryMetaTitle.value,
-    meta_h1: categoryMetaH1.value,
-    meta_keyword: categoryMetaKeyword.value,
-    meta_description: categoryMetaDescription.value,
+    meta_title: categoryMetaTitle.value.trim() || null,
+    meta_h1: categoryMetaH1.value.trim() || null,
+    meta_keyword: categoryMetaKeyword.value.trim() || null,
+    meta_description: categoryMetaDescription.value.trim() || null,
   })
 })
 </script>
