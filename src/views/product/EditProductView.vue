@@ -66,6 +66,12 @@ const updateAll = async () => {
       updateResquest.media_ids.push(...mediaIDs)
     }
 
+    // Подставляем путь первого media файла в поле image
+    const allMediaFiles = [...currentProductMedium.value, ...uploadedFiles]
+    if (allMediaFiles.length > 0 && allMediaFiles[0].path) {
+      updateResquest.image = allMediaFiles[0].path
+    }
+
     await updateProduct(updateResquest)
     await router.push({ name: 'product' })
   } catch (error) {
