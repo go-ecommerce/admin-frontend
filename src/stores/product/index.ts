@@ -10,6 +10,8 @@ import type {
   MediumResponse,
   ProductResponse,
   UpdateProductRequest,
+  ShortProduct,
+  SyncRelatedProductRequest,
 } from '@/utils/types/api/generatedApiGo'
 
 const defaultDataProducts: IProductResponse = {
@@ -27,6 +29,7 @@ export const useProductStore = defineStore('product', () => {
   const products = ref<IProductResponse>(defaultDataProducts)
   const currentProduct = ref<ProductResponse | null>(null)
   const currentProductMedium = ref<MediumResponse[]>([])
+  const currentRelatedProducts = ref<ShortProduct[]>([])
   const { toast } = useToast()
 
   const getProducts = async (payload: IProductRequest): Promise<void> => {
@@ -79,14 +82,15 @@ export const useProductStore = defineStore('product', () => {
     }
   }
 
-  const createProduct = async (request: CreateProductRequest): Promise<void> => {
+  const createProduct = async (request: CreateProductRequest): Promise<ProductResponse> => {
     try {
       isLoading.value = true
-      await ProductService.createApiProduct(request)
+      const product = await ProductService.createApiProduct(request)
       toast({
         title: '✅ Success create',
         variant: 'success',
       })
+      return product
     } catch (error: any) {
       toast({
         title: 'Error creating product',
@@ -123,17 +127,51 @@ export const useProductStore = defineStore('product', () => {
     }
   }
 
+  const getRelatedProducts = async (uuid: string): Promise<void> => {
+    try {
+      currentRelatedProducts.value = await ProductService.getRelatedProducts(uuid)
+    } catch (error: any) {
+      toast({
+        title: 'Error fetching related products',
+        description: error.message || 'An error occurred while fetching related products.',
+        variant: 'destructive',
+      })
+      throw error
+    }
+  }
+
+  const syncRelatedProducts = async (uuid: string, productIds: string[]): Promise<void> => {
+    try {
+      const payload: SyncRelatedProductRequest = { product_ids: productIds }
+      await ProductService.syncRelatedProducts(uuid, payload)
+      toast({
+        title: '✅ Related products updated',
+        variant: 'success',
+      })
+    } catch (error: any) {
+      toast({
+        title: 'Error syncing related products',
+        description: error.message || 'An error occurred while syncing related products.',
+        variant: 'destructive',
+      })
+      throw error
+    }
+  }
+
   return {
     // state
     isLoading,
     products,
     currentProduct,
     currentProductMedium,
+    currentRelatedProducts,
     // methods
     createProduct,
     updateProduct,
     getProducts,
     getProductById,
     getProductsWithMedium,
+    getRelatedProducts,
+    syncRelatedProducts,
   }
 })

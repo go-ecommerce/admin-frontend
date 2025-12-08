@@ -9,6 +9,7 @@ import ProductIdentifierForm from '@/components/product/ProductIdentifierForm.vu
 import ProductMetaForm from '@/components/product/ProductMetaForm.vue'
 import ProductPhysicalAttribute from '@/components/product/ProductPhysicalAttribute.vue'
 import ProductStockForm from '@/components/product/ProductStockForm.vue'
+import RelatedProductsForm from '@/components/product/RelatedProductsForm.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FileUpload, FileUploadGrid } from '@/components/ui/file-upload'
@@ -21,12 +22,19 @@ import {
   NumberFieldInput,
 } from '@/components/ui/number-field'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import MediaService from '@/services/MediaService'
 import { useProductStore } from '@/stores/product'
-import type { CreateProductRequest, MediumResponse } from '@/utils/types/api/generatedApiGo'
+import type {
+  CreateProductRequest,
+  MediumResponse,
+  ShortProduct,
+} from '@/utils/types/api/generatedApiGo'
 
 const router = useRouter()
-const { createProduct } = useProductStore()
+const { createProduct, syncRelatedProducts } = useProductStore()
+
+const relatedProducts = ref<ShortProduct[]>([])
 
 const productInfo = ref<CreateProductRequest>({
   name: '',
@@ -62,6 +70,7 @@ const productInfo = ref<CreateProductRequest>({
 
 const saveAll = async () => {
   let uploadedFiles: MediumResponse[] = []
+  let createdProductId: string | undefined
 
   try {
     uploadedFiles = await loadFile()
@@ -74,8 +83,18 @@ const saveAll = async () => {
       productInfo.value.image = uploadedFiles[0].path
     }
 
-    await createProduct(productInfo.value)
-    // await router.push({ name: 'product' })
+    const createdProduct = await createProduct(productInfo.value)
+    createdProductId = createdProduct?.id
+
+    // Sync related products if any and product was created
+    if (createdProductId && relatedProducts.value.length > 0) {
+      const productIds = relatedProducts.value
+        .map((p) => p.id)
+        .filter((id): id is string => typeof id === 'string')
+      await syncRelatedProducts(createdProductId, productIds)
+    }
+
+    await router.push({ name: 'product' })
   } catch (error) {
     await Promise.all(
       uploadedFiles
@@ -120,108 +139,132 @@ const handleFilesChange = (newFiles: any) => {
       </Button>
     </div>
   </div>
-  <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:px-6 sm:py-0 md:gap-8">
-    <div class="col-span-2 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Product info</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProductForm v-model="productInfo" />
-        </CardContent>
-      </Card>
+  <main class="p-4 sm:px-6 sm:py-0 md:gap-8">
+    <Tabs default-value="general" class="w-full">
+      <TabsList class="grid w-full grid-cols-2">
+        <TabsTrigger value="general">General Info</TabsTrigger>
+        <TabsTrigger value="related">Related Products</TabsTrigger>
+      </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Meta information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProductMetaForm v-model="productInfo" />
-        </CardContent>
-      </Card>
+      <TabsContent value="general" class="space-y-6 mt-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Product info</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProductForm v-model="productInfo" />
+              </CardContent>
+            </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Identifier</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProductIdentifierForm v-model="productInfo" />
-        </CardContent>
-      </Card>
-    </div>
-    <div class="flex flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Addition Info</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <NumberField v-model="productInfo.sort_order">
-            <Label>Sort order</Label>
-            <NumberFieldContent>
-              <NumberFieldDecrement />
-              <NumberFieldInput />
-              <NumberFieldIncrement />
-            </NumberFieldContent>
-          </NumberField>
-        </CardContent>
-      </Card>
-      <div class="flex flex-row items-center justify-between rounded-lg border p-4">
-        <div class="space-y-0.5">
-          <div
-            class="font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-base"
-          >
-            Product status
+            <Card>
+              <CardHeader>
+                <CardTitle>Meta information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProductMetaForm v-model="productInfo" />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Identifier</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProductIdentifierForm v-model="productInfo" />
+              </CardContent>
+            </Card>
           </div>
-          <p class="text-sm text-muted-foreground">Product status show product on catalog</p>
+          <div class="flex flex-col gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Addition Info</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <NumberField v-model="productInfo.sort_order">
+                  <Label>Sort order</Label>
+                  <NumberFieldContent>
+                    <NumberFieldDecrement />
+                    <NumberFieldInput />
+                    <NumberFieldIncrement />
+                  </NumberFieldContent>
+                </NumberField>
+              </CardContent>
+            </Card>
+            <div class="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div class="space-y-0.5">
+                <div
+                  class="font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-base"
+                >
+                  Product status
+                </div>
+                <p class="text-sm text-muted-foreground">
+                  Product status show product on catalog
+                </p>
+              </div>
+              <div>
+                <Switch v-model="productInfo.is_enable" />
+              </div>
+            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Image Category</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FileUpload
+                  @onChange="handleFilesChange"
+                  class="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800"
+                >
+                  <FileUploadGrid />
+                </FileUpload>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Price</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <NumberField v-model="productInfo.price">
+                  <Label>Price</Label>
+                  <NumberFieldContent>
+                    <NumberFieldDecrement />
+                    <NumberFieldInput />
+                    <NumberFieldIncrement />
+                  </NumberFieldContent>
+                </NumberField>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Stocks</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProductStockForm v-model="productInfo" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Phisical Attribute</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProductPhysicalAttribute v-model="productInfo" />
+              </CardContent>
+            </Card>
+          </div>
         </div>
-        <div>
-          <Switch v-model="productInfo.is_enable" />
-        </div>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Image Category</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FileUpload
-            @onChange="handleFilesChange"
-            class="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800"
-          >
-            <FileUploadGrid />
-          </FileUpload>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Price</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <NumberField v-model="productInfo.price">
-            <Label>Price</Label>
-            <NumberFieldContent>
-              <NumberFieldDecrement />
-              <NumberFieldInput />
-              <NumberFieldIncrement />
-            </NumberFieldContent>
-          </NumberField>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Stocks</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProductStockForm v-model="productInfo" />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Phisical Attribute</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProductPhysicalAttribute v-model="productInfo" />
-        </CardContent>
-      </Card>
-    </div>
+      </TabsContent>
+
+      <TabsContent value="related" class="space-y-6 mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Related Products</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RelatedProductsForm v-model="relatedProducts" />
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   </main>
 </template>

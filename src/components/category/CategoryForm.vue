@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { Sparkles } from 'lucide-vue-next'
 import { ref, watch } from 'vue'
 
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { generateSlug as generateSlugUtil } from '@/utils/slug'
 
 import CategoryCombobox from './CategoryCombobox.vue'
 
@@ -32,6 +35,10 @@ watch([categoryName, categorySlug, categoryDescription, categoryParentId], () =>
     parent_id: categoryParentId.value,
   })
 })
+
+const generateSlug = (): void => {
+  categorySlug.value = generateSlugUtil(categoryName.value)
+}
 </script>
 
 <template>
@@ -42,7 +49,20 @@ watch([categoryName, categorySlug, categoryDescription, categoryParentId], () =>
         <Input id="name" v-model="categoryName" placeholder="Name of your category" />
       </div>
       <div class="flex flex-col space-y-1.5">
-        <Label for="Slug">Slug</Label>
+        <div class="flex items-center justify-between">
+          <Label for="Slug">Slug</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            class="h-7 gap-1"
+            @click="generateSlug"
+            :disabled="!categoryName.trim()"
+          >
+            <Sparkles class="h-3.5 w-3.5" />
+            <span>Generate</span>
+          </Button>
+        </div>
         <div class="relative w-full items-center">
           <Input id="slug" v-model="categorySlug" type="text" placeholder="slug" class="pl-60" />
           <span

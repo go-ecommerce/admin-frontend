@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { Sparkles } from 'lucide-vue-next'
 import { ref, watch } from 'vue'
 
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { generateSlug as generateSlugUtil } from '@/utils/slug'
 
 const frontendProductUrl = '/product/'
 const appFrontend = import.meta.env.VITE_FRONTEND_URL
@@ -39,6 +42,10 @@ watch([productName, productSlug, productModel, productDescription], () => {
     description: productDescription.value,
   })
 })
+
+const generateSlug = (): void => {
+  productSlug.value = generateSlugUtil(productName.value)
+}
 </script>
 
 <template>
@@ -49,7 +56,20 @@ watch([productName, productSlug, productModel, productDescription], () => {
         <Input id="name" v-model="productName" placeholder="Name of your product" />
       </div>
       <div class="flex flex-col space-y-1.5">
-        <Label for="Slug">Slug</Label>
+        <div class="flex items-center justify-between">
+          <Label for="Slug">Slug</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            class="h-7 gap-1"
+            @click="generateSlug"
+            :disabled="!productName.trim()"
+          >
+            <Sparkles class="h-3.5 w-3.5" />
+            <span>Generate</span>
+          </Button>
+        </div>
         <div class="relative w-full items-center">
           <Input id="slug" v-model="productSlug" type="text" placeholder="slug" class="pl-60" />
           <span

@@ -5,6 +5,8 @@ import type {
   ProductResponse,
   ProductWithMediumResponse,
   UpdateProductRequest,
+  SyncRelatedProductRequest,
+  ShortProduct,
 } from '@/utils/types/api/generatedApiGo'
 
 export default class ProductService {
@@ -40,6 +42,18 @@ export default class ProductService {
     payload: UpdateProductRequest,
   ): Promise<ProductResponse> {
     const { data }: any = await api.put(`/product/${uuid}`, payload)
+    return data
+  }
+
+  public static async syncRelatedProducts(
+    uuid: string,
+    payload: SyncRelatedProductRequest,
+  ): Promise<void> {
+    await api.post(`/product/${uuid}/sync-related-product`, payload)
+  }
+
+  public static async getRelatedProducts(uuid: string): Promise<ShortProduct[]> {
+    const { data }: any = await api.get(`/product/id/${uuid}/related_product`)
     return data
   }
 }
