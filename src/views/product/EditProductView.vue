@@ -198,16 +198,16 @@ onMounted(async () => {
                 </NumberField>
               </CardContent>
             </Card>
-            <div class="flex flex-row items-center justify-between rounded-lg border p-4">
+            <div
+              class="p-4 bg-card text-card-foreground flex justify-between gap-6 rounded-xl border py-6 shadow-sm"
+            >
               <div class="space-y-0.5">
                 <div
                   class="font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-base"
                 >
                   Product status
                 </div>
-                <p class="text-sm text-muted-foreground">
-                  Product status show product on catalog
-                </p>
+                <p class="text-sm text-muted-foreground">Product status show product on catalog</p>
               </div>
               <div>
                 <Switch v-model="currentProduct.is_enable" />

@@ -45,16 +45,28 @@ export const transliterate = (text: string): string => {
     .join('')
 }
 
+export const SLUG_DELIMITERS = {
+  DASH: '-',
+  UNDERSCORE: '_',
+  DOT: '.',
+} as const
+
+type SlugDelimiter = (typeof SLUG_DELIMITERS)[keyof typeof SLUG_DELIMITERS]
+
+
 /**
  * Generate URL-friendly slug from text
  */
-export const generateSlug = (text: string): string => {
+export const generateSlug = (
+  text: string,
+  delimiter: SlugDelimiter = SLUG_DELIMITERS.DASH,
+): string => {
   if (!text.trim()) return ''
 
   return transliterate(text)
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
-    .replace(/[\s_]+/g, '-') // Replace spaces and underscores with hyphens
-    .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, delimiter)
+    .replace(/^-+|-+$/g, '')
 }

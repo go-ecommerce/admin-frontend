@@ -5,6 +5,7 @@ import { category } from '@/router/modules/category.ts'
 import { collection } from '@/router/modules/collection.ts'
 import { dashboard } from '@/router/modules/dashboard.ts'
 import { product } from '@/router/modules/product.ts'
+import { attribute } from '@/router/modules/attribute.ts'
 
 export const routes: RouteRecordRaw[] = [
   ...auth,
@@ -12,4 +13,5 @@ export const routes: RouteRecordRaw[] = [
   ...category,
   ...collection,
   ...product,
+  ...attribute
 ]

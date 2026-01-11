@@ -115,7 +115,7 @@
                     <AvatarFallback class="rounded-lg"> CN </AvatarFallback>
                   </Avatar>
                   <div class="grid flex-1 text-left text-sm leading-tight">
-<!--                    <span class="truncate font-semibold">{{ user.name }}</span>-->
+                    <!--                    <span class="truncate font-semibold">{{ user.name }}</span>-->
                     <span class="truncate text-xs">{{ user.email }}</span>
                   </div>
                   <ChevronsUpDown class="ml-auto size-4" />
@@ -133,7 +133,7 @@
                       <AvatarFallback class="rounded-lg"> CN </AvatarFallback>
                     </Avatar>
                     <div class="grid flex-1 text-left text-sm leading-tight">
-<!--                      <span class="truncate font-semibold">{{ user.name }}</span>-->
+                      <!--                      <span class="truncate font-semibold">{{ user.name }}</span>-->
                       <span class="truncate text-xs">{{ user.email }}</span>
                     </div>
                   </div>
@@ -184,10 +184,10 @@
               <template v-for="(breadcrumb, index) in breadcrumbs" :key="index">
                 <BreadcrumbItem :class="{ 'hidden md:block': index < breadcrumbs.length - 1 }">
                   <BreadcrumbLink v-if="index < breadcrumbs.length - 1" :href="breadcrumb.path">
-                    {{ breadcrumb.name }}
+                    {{ breadcrumb.name?.title }}
                   </BreadcrumbLink>
                   <BreadcrumbPage v-else>
-                    {{ breadcrumb.name }}
+                    {{ breadcrumb.name?.title }}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator
@@ -223,6 +223,7 @@ import {
   Package,
   PieChart,
   Settings2,
+  Share2,
   Sparkles,
   SquareTerminal,
   Trash2,
@@ -322,15 +323,22 @@ const data = {
           title: 'Get Started',
           url: '#',
         },
-        {
-          title: 'Tutorials',
-          url: '#',
-        },
-        {
-          title: 'Changelog',
-          url: '#',
-        },
       ],
+    },
+    {
+      title: 'Attributes',
+      utl: '#',
+      icon: Share2,
+      items: [
+        {
+          title: 'Attribute Group',
+          url: '/attribute-group',
+        },
+        {
+          title: 'Attributes',
+          url: '/attribute',
+        },
+      ]
     },
     {
       title: 'Settings',

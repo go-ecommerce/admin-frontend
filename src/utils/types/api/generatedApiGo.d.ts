@@ -24,11 +24,39 @@ export interface AttributeGroupResponse {
   description?: string
   id?: string
   name?: string
+  slug?: string
   updated_at?: string
 }
 
 export interface AttributeGroupsResponse {
-  groups?: GithubComStickproGoStoreInternalDtoAttributeGroupDTO[]
+  groups?: GithubComStickproGoStoreInternalDtoAttributeGroupWithValuesDTO[]
+}
+
+export interface AttributeResponse {
+  attribute_group_id?: UuidNullUUID
+  created_at?: string
+  id?: string
+  is_filterable?: boolean
+  is_required?: boolean
+  is_visible?: boolean
+  name?: string
+  slug?: string
+  sort_order?: number
+  type?: string
+  unit?: string
+  updated_at?: string
+}
+
+export interface AttributeValueResponse {
+  attribute_id?: string
+  created_at?: string
+  display_order?: number
+  id?: string
+  is_active?: boolean
+  updated_at?: string
+  value?: string
+  value_normalized?: string
+  value_numeric?: number
 }
 
 export interface AuthRequest {
@@ -53,22 +81,6 @@ export interface BreadcrumbDTO {
   slug?: string
 }
 
-export interface Category {
-  created_at?: PgtypeTimestamp
-  description?: PgtypeText
-  id?: string
-  image_path?: PgtypeText
-  is_enable?: boolean
-  meta_description?: PgtypeText
-  meta_h1?: PgtypeText
-  meta_keyword?: PgtypeText
-  meta_title?: PgtypeText
-  name?: string
-  parent_id?: UuidNullUUID
-  slug?: string
-  updated_at?: PgtypeTimestamp
-}
-
 export interface CategoryResponse {
   created_at?: string
   description?: string
@@ -83,34 +95,6 @@ export interface CategoryResponse {
   parent_id?: string
   slug?: string
   updated_at?: string
-}
-
-export interface City {
-  address?: string
-  area?: PgtypeText
-  area_type?: PgtypeText
-  capital_marker?: number
-  city?: string
-  city_type?: string
-  country?: string
-  federal_district?: string
-  fias_id?: string
-  fias_level?: number
-  foundation_year?: number
-  geo_lat?: number
-  geo_lon?: number
-  id?: string
-  kladr_id?: string
-  okato?: string
-  oktmo?: string
-  population?: number
-  postal_code?: string
-  region?: string
-  region_type?: string
-  settlement?: PgtypeText
-  settlement_type?: PgtypeText
-  tax_office?: string
-  timezone?: string
 }
 
 export interface CityResponse {
@@ -141,15 +125,6 @@ export interface CityResponse {
   timezone?: string
 }
 
-export interface Collection {
-  created_at?: PgtypeTimestamptz
-  description?: PgtypeText
-  id?: string
-  name?: string
-  slug?: string
-  updated_at?: PgtypeTimestamptz
-}
-
 export interface CollectionResponse {
   created_at?: string
   description?: string
@@ -176,26 +151,46 @@ export interface CreateAttributeGroupRequest {
    */
   description?: string
   name: string
+  slug: string
 }
 
 export interface CreateAttributeRequest {
   attribute_group_id?: string
-  is_filterable: boolean
-  is_visible: boolean
+  is_filterable?: boolean
+  is_required?: boolean
+  is_visible?: boolean
   /**
    * @minLength 1
    * @maxLength 255
    */
   name: string
-  /** @min 0 */
-  sort_order?: number
   /**
    * @minLength 1
    * @maxLength 255
    */
-  type: string
-  /** @minLength 1 */
+  slug: string
+  /** @min 0 */
+  sort_order?: number
+  type: 'select' | 'number' | 'boolean' | 'text'
+  /**
+   * @minLength 1
+   * @maxLength 50
+   */
+  unit?: string
+}
+
+export interface CreateAttributeValueRequest {
+  attribute_id: string
+  /** @min 0 */
+  display_order?: number
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
   value: string
+  /** @maxLength 255 */
+  value_normalized?: string
+  value_numeric?: number
 }
 
 export interface CreateCategoryRequest {
@@ -315,6 +310,18 @@ export interface JSONResponseAttributeGroupsResponse {
   message?: string
 }
 
+export interface JSONResponseAttributeResponse {
+  code?: number
+  data?: AttributeResponse
+  message?: string
+}
+
+export interface JSONResponseAttributeValueResponse {
+  code?: number
+  data?: AttributeValueResponse
+  message?: string
+}
+
 export interface JSONResponseAuthResponse {
   code?: number
   data?: AuthResponse
@@ -387,15 +394,27 @@ export interface JSONResponseRegisterUserResponse {
   message?: string
 }
 
-export interface JSONResponseResponseWithFullPaginationCategory {
+export interface JSONResponseResponseWithFullPaginationGithubComStickproGoStoreInternalModelsAttribute {
   code?: number
-  data?: ResponseWithFullPaginationCategory
+  data?: ResponseWithFullPaginationGithubComStickproGoStoreInternalModelsAttribute
   message?: string
 }
 
-export interface JSONResponseResponseWithFullPaginationCollection {
+export interface JSONResponseResponseWithFullPaginationGithubComStickproGoStoreInternalModelsAttributeGroup {
   code?: number
-  data?: ResponseWithFullPaginationCollection
+  data?: ResponseWithFullPaginationGithubComStickproGoStoreInternalModelsAttributeGroup
+  message?: string
+}
+
+export interface JSONResponseResponseWithFullPaginationGithubComStickproGoStoreInternalModelsCategory {
+  code?: number
+  data?: ResponseWithFullPaginationGithubComStickproGoStoreInternalModelsCategory
+  message?: string
+}
+
+export interface JSONResponseResponseWithFullPaginationGithubComStickproGoStoreInternalModelsCollection {
+  code?: number
+  data?: ResponseWithFullPaginationGithubComStickproGoStoreInternalModelsCollection
   message?: string
 }
 
@@ -417,21 +436,15 @@ export interface JSONResponseArrayAttributeGroupResponse {
   message?: string
 }
 
+export interface JSONResponseArrayAttributeResponse {
+  code?: number
+  data?: AttributeResponse[]
+  message?: string
+}
+
 export interface JSONResponseArrayBreadcrumbDTO {
   code?: number
   data?: BreadcrumbDTO[]
-  message?: string
-}
-
-export interface JSONResponseArrayCity {
-  code?: number
-  data?: City[]
-  message?: string
-}
-
-export interface JSONResponseArrayProduct {
-  code?: number
-  data?: Product[]
   message?: string
 }
 
@@ -441,15 +454,27 @@ export interface JSONResponseArrayShortProduct {
   message?: string
 }
 
-export interface JSONResponseArrayGithubComStickproGoStoreInternalDeliveryHttpResponseAttributeResponseAttributeResponse {
+export interface JSONResponseArrayGithubComStickproGoStoreInternalDtoAttributeGroupWithValuesDTO {
   code?: number
-  data?: GithubComStickproGoStoreInternalDeliveryHttpResponseAttributeResponseAttributeResponse[]
+  data?: GithubComStickproGoStoreInternalDtoAttributeGroupWithValuesDTO[]
   message?: string
 }
 
-export interface JSONResponseGithubComStickproGoStoreInternalDeliveryHttpResponseAttributeResponseAttributeResponse {
+export interface JSONResponseArrayGithubComStickproGoStoreInternalDtoAttributeValueDTO {
   code?: number
-  data?: GithubComStickproGoStoreInternalDeliveryHttpResponseAttributeResponseAttributeResponse
+  data?: GithubComStickproGoStoreInternalDtoAttributeValueDTO[]
+  message?: string
+}
+
+export interface JSONResponseArrayGithubComStickproGoStoreInternalModelsCity {
+  code?: number
+  data?: GithubComStickproGoStoreInternalModelsCity[]
+  message?: string
+}
+
+export interface JSONResponseArrayGithubComStickproGoStoreInternalModelsProduct {
+  code?: number
+  data?: GithubComStickproGoStoreInternalModelsProduct[]
   message?: string
 }
 
@@ -483,42 +508,6 @@ export interface MediumResponse {
   name?: string
   path?: string
   size?: number
-}
-
-export interface Product {
-  category_id?: UuidNullUUID
-  created_at?: PgtypeTimestamp
-  description?: PgtypeText
-  ean?: PgtypeText
-  height?: number
-  id?: string
-  image?: PgtypeText
-  is_enable?: boolean
-  isbn?: PgtypeText
-  jan?: PgtypeText
-  length?: number
-  location?: PgtypeText
-  manufacturer_id?: UuidNullUUID
-  meta_description?: PgtypeText
-  meta_h1?: PgtypeText
-  meta_keyword?: PgtypeText
-  meta_title?: PgtypeText
-  minimum?: number
-  model?: string
-  mpn?: PgtypeText
-  name?: string
-  price?: number
-  quantity?: number
-  sku?: PgtypeText
-  slug?: string
-  sort_order?: number
-  stock_status?: StockStatus
-  subtract?: boolean
-  upc?: PgtypeText
-  updated_at?: PgtypeTimestamp
-  viewed?: number
-  weight?: number
-  width?: number
 }
 
 export interface ProductResponse {
@@ -589,13 +578,23 @@ export interface RegisterUserResponse {
   token?: string
 }
 
-export interface ResponseWithFullPaginationCategory {
-  items?: Category[]
+export interface ResponseWithFullPaginationGithubComStickproGoStoreInternalModelsAttribute {
+  items?: GithubComStickproGoStoreInternalModelsAttribute[]
   pagination?: FullPagingData
 }
 
-export interface ResponseWithFullPaginationCollection {
-  items?: Collection[]
+export interface ResponseWithFullPaginationGithubComStickproGoStoreInternalModelsAttributeGroup {
+  items?: GithubComStickproGoStoreInternalModelsAttributeGroup[]
+  pagination?: FullPagingData
+}
+
+export interface ResponseWithFullPaginationGithubComStickproGoStoreInternalModelsCategory {
+  items?: GithubComStickproGoStoreInternalModelsCategory[]
+  pagination?: FullPagingData
+}
+
+export interface ResponseWithFullPaginationGithubComStickproGoStoreInternalModelsCollection {
+  items?: GithubComStickproGoStoreInternalModelsCollection[]
   pagination?: FullPagingData
 }
 
@@ -622,6 +621,30 @@ export enum StockStatus {
 
 export interface SyncRelatedProductRequest {
   product_ids?: string[]
+}
+
+export interface UpdateAttributeGroupRequest {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  description?: string
+  name: string
+  slug: string
+}
+
+export interface UpdateAttributeValueRequest {
+  /** @min 0 */
+  display_order?: number
+  is_active?: boolean
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  value: string
+  /** @maxLength 255 */
+  value_normalized?: string
+  value_numeric?: number
 }
 
 export interface UpdateCategoryRequest {
@@ -734,15 +757,6 @@ export interface UserInfoResponse {
   updated_at?: string
 }
 
-export interface GithubComStickproGoStoreInternalDeliveryHttpRequestAttributeRequestUpdateAttributeGroupRequest {
-  /**
-   * @minLength 1
-   * @maxLength 100
-   */
-  description?: string
-  name: string
-}
-
 export interface GithubComStickproGoStoreInternalDeliveryHttpRequestProductRequestSyncProductAttributeRequest {
   attribute_ids: string[]
 }
@@ -754,34 +768,143 @@ export interface GithubComStickproGoStoreInternalDeliveryHttpRequestProductRevie
   title?: string
 }
 
-export interface GithubComStickproGoStoreInternalDeliveryHttpResponseAttributeResponseAttributeResponse {
-  attribute_group_id?: UuidNullUUID
-  created_at?: string
-  id?: string
-  is_filterable?: boolean
-  is_visible?: boolean
-  name?: string
-  sort_order?: number
-  type?: string
-  updated_at?: string
-  value?: string
-}
-
-export interface GithubComStickproGoStoreInternalDtoAttributeDTO {
-  id?: string
-  is_filterable?: boolean
-  is_visible?: boolean
-  name?: string
-  sort_order?: number
-  type?: string
-  value?: string
-}
-
-export interface GithubComStickproGoStoreInternalDtoAttributeGroupDTO {
-  attributes?: GithubComStickproGoStoreInternalDtoAttributeDTO[]
+export interface GithubComStickproGoStoreInternalDtoAttributeGroupWithValuesDTO {
+  attributes?: GithubComStickproGoStoreInternalDtoAttributeWithValuesDTO[]
   group_description?: string
   group_id?: string
   group_name?: string
+  group_slug?: string
+}
+
+export interface GithubComStickproGoStoreInternalDtoAttributeValueDTO {
+  display_order?: number
+  id?: string
+  usage_count?: number
+  value?: string
+  value_numeric?: number
+}
+
+export interface GithubComStickproGoStoreInternalDtoAttributeWithValuesDTO {
+  id?: string
+  is_filterable?: boolean
+  name?: string
+  slug?: string
+  type?: string
+  unit?: string
+  values?: GithubComStickproGoStoreInternalDtoAttributeValueDTO[]
+}
+
+export interface GithubComStickproGoStoreInternalModelsAttribute {
+  attribute_group_id?: UuidNullUUID
+  created_at?: PgtypeTimestamp
+  id?: string
+  is_filterable?: PgtypeBool
+  is_required?: PgtypeBool
+  is_visible?: PgtypeBool
+  name?: string
+  slug?: string
+  sort_order?: PgtypeInt4
+  type?: string
+  unit?: PgtypeText
+  updated_at?: PgtypeTimestamp
+}
+
+export interface GithubComStickproGoStoreInternalModelsAttributeGroup {
+  created_at?: PgtypeTimestamp
+  description?: PgtypeText
+  id?: string
+  name?: string
+  slug?: string
+  updated_at?: PgtypeTimestamp
+}
+
+export interface GithubComStickproGoStoreInternalModelsCategory {
+  created_at?: PgtypeTimestamp
+  description?: PgtypeText
+  id?: string
+  image_path?: PgtypeText
+  is_enable?: boolean
+  meta_description?: PgtypeText
+  meta_h1?: PgtypeText
+  meta_keyword?: PgtypeText
+  meta_title?: PgtypeText
+  name?: string
+  parent_id?: UuidNullUUID
+  slug?: string
+  updated_at?: PgtypeTimestamp
+}
+
+export interface GithubComStickproGoStoreInternalModelsCity {
+  address?: string
+  area?: PgtypeText
+  area_type?: PgtypeText
+  capital_marker?: number
+  city?: string
+  city_type?: string
+  country?: string
+  federal_district?: string
+  fias_id?: string
+  fias_level?: number
+  foundation_year?: number
+  geo_lat?: number
+  geo_lon?: number
+  id?: string
+  kladr_id?: string
+  okato?: string
+  oktmo?: string
+  population?: number
+  postal_code?: string
+  region?: string
+  region_type?: string
+  settlement?: PgtypeText
+  settlement_type?: PgtypeText
+  tax_office?: string
+  timezone?: string
+}
+
+export interface GithubComStickproGoStoreInternalModelsCollection {
+  created_at?: PgtypeTimestamptz
+  description?: PgtypeText
+  id?: string
+  name?: string
+  slug?: string
+  updated_at?: PgtypeTimestamptz
+}
+
+export interface GithubComStickproGoStoreInternalModelsProduct {
+  category_id?: UuidNullUUID
+  created_at?: PgtypeTimestamp
+  description?: PgtypeText
+  ean?: PgtypeText
+  height?: number
+  id?: string
+  image?: PgtypeText
+  is_enable?: boolean
+  isbn?: PgtypeText
+  jan?: PgtypeText
+  length?: number
+  location?: PgtypeText
+  manufacturer_id?: UuidNullUUID
+  meta_description?: PgtypeText
+  meta_h1?: PgtypeText
+  meta_keyword?: PgtypeText
+  meta_title?: PgtypeText
+  minimum?: number
+  model?: string
+  mpn?: PgtypeText
+  name?: string
+  price?: number
+  quantity?: number
+  sku?: PgtypeText
+  slug?: string
+  sort_order?: number
+  stock_status?: StockStatus
+  subtract?: boolean
+  upc?: PgtypeText
+  updated_at?: PgtypeTimestamp
+  viewed?: number
+  weight?: number
+  width?: number
 }
 
 export interface GithubComStickproGoStoreInternalStorageRepositoryRepositoryProductsFindRow {
@@ -820,10 +943,20 @@ export interface GithubComStickproGoStoreInternalStorageRepositoryRepositoryProd
   width?: number
 }
 
+export interface PgtypeBool {
+  bool?: boolean
+  valid?: boolean
+}
+
 export enum PgtypeInfinityModifier {
   Infinity = 1,
   Finite = 0,
   NegativeInfinity = -1,
+}
+
+export interface PgtypeInt4 {
+  int32?: number
+  valid?: boolean
 }
 
 export interface PgtypeText {

@@ -27,13 +27,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Switch } from '@/components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useCategoryStore } from '@/stores/category'
-import type { ICategoryRequest } from '@/utils/types/api/apiGo.ts'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
+import { useAttributeStore } from '@/stores/attribute'
+import type {
+  IAttributeGroupRequest,
+  IAttributeRequest,
+  ICollectionRequest,
+} from '@/utils/types/api/apiGo.ts'
 
-const { categories, isLoading } = storeToRefs(useCategoryStore())
-const { getCategories } = useCategoryStore()
+const { attributes, isLoading } = storeToRefs(useAttributeStore())
+const { getAttributes, deleteAttribute } = useAttributeStore()
 
 const router = useRouter()
 
@@ -70,19 +73,10 @@ const columns: ColumnDef<any>[] = [
     cell: ({ row }) => h('div', { class: 'w-20' }, row.getValue('name')),
   },
   {
-    accessorKey: 'slug',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Slug' }),
+    accessorKey: 'value',
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Value' }),
 
-    cell: ({ row }) => h('div', { class: 'w-20' }, row.getValue('slug')),
-  },
-  {
-    accessorKey: 'is_enable',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Status' }),
-    cell: ({ row }) =>
-      h(Switch, {
-        checked: row.getValue('is_enable'),
-        'onUpdate:checked': (value: boolean) => row.toggleSelected(value),
-      }),
+    cell: ({ row }) => h('div', { class: 'w-20' }, row.getValue('value')),
   },
   {
     id: 'actions',
@@ -92,67 +86,54 @@ const columns: ColumnDef<any>[] = [
       h(DataTableRowActions, {
         row,
         class: 'justify-end',
-        editUrlName: 'category-edit',
+        editUrlName: 'attribute-edit',
+        onDelete: handleDelete,
       }),
   },
 ]
 
-const fetchCategories = async () => {
-  const payload: ICategoryRequest = { page: params.value.page, page_size: params.value.pageSize }
-  await getCategories(payload)
+const fetchAttributes = async () => {
+  const payload: IAttributeRequest = {
+    page: params.value.page,
+    page_size: params.value.pageSize,
+  }
+  await getAttributes(payload)
 }
 
+const handleDelete = async (id: string) => {
+  await deleteAttribute(id)
+  await fetchAttributes()
+}
 
-watch(params.value, fetchCategories, { immediate: true })
+watch(params.value, fetchAttributes, { immediate: true })
 
 onMounted(async () => {
-  await fetchCategories()
+  await fetchAttributes()
 })
 </script>
+
+<style scoped></style>
 
 <template>
   <main class="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
     <Tabs default-value="all">
       <div class="flex items-center">
-        <TabsList>
-          <TabsTrigger value="all"> All</TabsTrigger>
-          <TabsTrigger value="active"> Active</TabsTrigger>
-          <TabsTrigger value="draft"> Draft</TabsTrigger>
-          <TabsTrigger value="archived" class="hidden sm:flex"> Archived</TabsTrigger>
-        </TabsList>
         <div class="ml-auto flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger as-child>
-              <Button variant="outline" size="sm" class="h-7 gap-1">
-                <ListFilter class="h-3.5 w-3.5" />
-                <span class="sr-only sm:not-sr-only sm:whitespace-nowrap"> Filter </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem checked> Active</DropdownMenuItem>
-              <DropdownMenuItem>Draft</DropdownMenuItem>
-              <DropdownMenuItem> Archived</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button size="sm" variant="outline" class="h-7 gap-1">
-            <File class="h-3.5 w-3.5" />
-            <span class="sr-only sm:not-sr-only sm:whitespace-nowrap"> Export </span>
-          </Button>
-          <Button size="sm" class="h-7 gap-1" @click="router.push({ name: 'category-create' })">
+          <Button
+            size="sm"
+            class="h-7 gap-1"
+            @click="router.push({ name: 'attribute-create' })"
+          >
             <PlusCircle class="h-3.5 w-3.5" />
-            <span class="sr-only sm:not-sr-only sm:whitespace-nowrap"> Add Category </span>
+            <span class="sr-only sm:not-sr-only sm:whitespace-nowrap"> Add Attribute </span>
           </Button>
         </div>
       </div>
       <TabsContent value="all">
         <Card>
           <CardHeader>
-            <CardTitle>Categories</CardTitle>
-            <CardDescription>
-              Manage your Category and view their sales performance.
-            </CardDescription>
+            <CardTitle>Attributes</CardTitle>
+            <CardDescription> Manage your Attributes. </CardDescription>
           </CardHeader>
           <CardContent>
             <DataTable
@@ -160,14 +141,14 @@ onMounted(async () => {
               v-model:page-size="params.pageSize"
               :columns="columns"
               :is-loading="isLoading"
-              :data="categories?.items ?? []"
-              :total-items="categories?.pagination.total ?? 0"
+              :data="attributes?.items ?? []"
+              :total-items="attributes?.pagination.total ?? 0"
             />
           </CardContent>
           <CardFooter>
             <div class="text-xs text-muted-foreground">
-              Showing <strong>1-10</strong> of <strong>{{ categories?.pagination?.total }}</strong>
-              products
+              Showing
+              <strong>{{ attributes?.pagination?.total }}</strong> of attribute groups
             </div>
           </CardFooter>
         </Card>

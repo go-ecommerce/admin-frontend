@@ -1,7 +1,18 @@
 <script setup lang="ts">
 import { DotsHorizontalIcon } from '@radix-icons/vue'
 import type { Row } from '@tanstack/vue-table'
+import { ref } from 'vue'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -12,7 +23,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils.ts'
-import type { CategoryResponse } from '@/utils/types/api/generatedApiGo'
 
 interface DataTableRowActionsProps {
   row: Row<{ id: string }>
@@ -20,6 +30,17 @@ interface DataTableRowActionsProps {
 }
 
 const props = defineProps<DataTableRowActionsProps>()
+
+const emit = defineEmits<{
+  delete: [id: string]
+}>()
+
+const isDeleteDialogOpen = ref(false)
+
+const handleDelete = () => {
+  emit('delete', props.row.original.id)
+  isDeleteDialogOpen.value = false
+}
 </script>
 
 <template>
@@ -36,14 +57,27 @@ const props = defineProps<DataTableRowActionsProps>()
           <DropdownMenuItem>Edit</DropdownMenuItem>
         </RouterLink>
 
-        <DropdownMenuItem>Make a copy</DropdownMenuItem>
-        <DropdownMenuItem>Favorite</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem @click="isDeleteDialogOpen = true">
           Delete
           <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+
+    <AlertDialog v-model:open="isDeleteDialogOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete this item.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction @click="handleDelete">Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>

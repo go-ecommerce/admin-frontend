@@ -1,15 +1,20 @@
-import { defineStore } from 'pinia'
+import { defineStore } from 'pinia';
 
-import { ref } from 'vue'
 
-import { useToast } from '@/components/ui/toast/use-toast'
-import CategoryService from '@/services/CatergoryService'
-import type { ICategoriesResponse, ICategoryRequest } from '@/utils/types/api/apiGo.ts'
-import type {
-  CategoryResponse,
-  CreateCategoryRequest,
-  UpdateCategoryRequest,
-} from '@/utils/types/api/generatedApiGo'
+
+import { ref } from 'vue';
+
+
+
+import { useToast } from '@/components/ui/toast/use-toast';
+import AttributeService from '@/services/AttributeService';
+import CategoryService from '@/services/CatergoryService';
+import type { ICategoriesResponse, ICategoryRequest } from '@/utils/types/api/apiGo.ts';
+import type { CategoryResponse, CreateCategoryRequest, UpdateCategoryRequest } from '@/utils/types/api/generatedApiGo';
+
+
+
+
 
 const defaultDataCategories: ICategoriesResponse = {
   items: [],
@@ -95,6 +100,26 @@ export const useCategoryStore = defineStore('category', () => {
       toast({
         title: 'Error updating category',
         description: error.message || 'An error occurred while updating the category',
+        variant: 'destructive',
+      })
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const deleteCategory = async (uuid: string): Promise<void> => {
+    try {
+      isLoading.value = true
+      await CategoryService.dele(id)
+      toast({
+        title: '✅ Success delete',
+        variant: 'success',
+      })
+    } catch (error: any) {
+      toast({
+        title: 'Error deleting attribute group',
+        description: error.message || 'An error occurred while deleting the attribute group',
         variant: 'destructive',
       })
       throw error

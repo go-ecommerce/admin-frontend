@@ -82,7 +82,7 @@ const onProductSelect = (selected: unknown): void => {
     </PopoverTrigger>
     <PopoverContent class="w-[200px] p-0">
       <Command>
-        <CommandInput v-model="searchQuery" placeholder="Search framework..." />
+        <CommandInput v-model="searchQuery" placeholder="Search product..." />
 
         <CommandList>
           <CommandGroupCustom>
