@@ -4,19 +4,12 @@
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div
-              class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground flex"
-            >
-              <div
-                class="flex aspect-square size-10 p-2 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
-              >
-                <component :is="GalleryVerticalEnd" class="size-10" />
-              </div>
-              <div class="grid flex-1 text-left text-sm leading-tight">
-                <span class="truncate font-semibold">GO Store</span>
-                <span class="truncate text-xs">Enterprise</span>
-              </div>
-            </div>
+            <SidebarMenuButton as-child class="data-[slot=sidebar-menu-button]:!p-1.5">
+              <a href="#">
+                <Shell class="!size-6" />
+                <span class="text-base font-semibold">Go store Inc.</span>
+              </a>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -215,7 +208,6 @@ import {
   Folder,
   Forward,
   Frame,
-  GalleryVerticalEnd,
   Library,
   LogOut,
   Map,
@@ -224,6 +216,7 @@ import {
   PieChart,
   Settings2,
   Share2,
+  Shell,
   Sparkles,
   SquareTerminal,
   Trash2,
@@ -338,7 +331,7 @@ const data = {
           title: 'Attributes',
           url: '/attribute',
         },
-      ]
+      ],
     },
     {
       title: 'Settings',

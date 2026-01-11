@@ -20,32 +20,30 @@
       </Button>
     </div>
   </div>
-  <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:px-6 sm:py-0 md:gap-8">
-    <div class="col-span-2 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Attribute info</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AttributeForm v-model="attributeInfo" />
-        </CardContent>
-      </Card>
+  <main class="grid grid-cols-1 lg:grid-cols-1 gap-6 p-4 sm:px-6 sm:py-0 md:gap-8">
+    <Card>
+      <CardHeader>
+        <CardTitle>Attribute info</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <AttributeForm v-model="attributeInfo" />
+      </CardContent>
+    </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Values</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div class="text-sm text-muted-foreground p-4 bg-muted/50 rounded-lg">
-            <p class="font-medium mb-2">💡 Add values on the next step</p>
-            <p>
-              After saving, you'll be redirected to the edit page where you can add predefined
-              values. This is especially useful for 'select' type attributes.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Values</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div class="text-sm text-muted-foreground p-4 bg-muted/50 rounded-lg">
+          <p class="font-medium mb-2">💡 Add values on the next step</p>
+          <p>
+            After saving, you'll be redirected to the edit page where you can add predefined values.
+            This is especially useful for 'select' type attributes.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   </main>
 </template>
 <script setup lang="ts">
