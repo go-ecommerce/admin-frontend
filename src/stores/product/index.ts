@@ -4,7 +4,7 @@ import { ref } from 'vue'
 
 import { useToast } from '@/components/ui/toast'
 import ProductService from '@/services/ProductService'
-import type { IProductRequest, IProductResponse } from '@/utils/types/api/apiGo.ts'
+import type { IProductRequest, IProductResponse, ProductAttributesResponse } from '@/utils/types/api/apiGo.ts'
 import type {
   CreateProductRequest,
   MediumResponse,
@@ -30,6 +30,7 @@ export const useProductStore = defineStore('product', () => {
   const currentProduct = ref<ProductResponse | null>(null)
   const currentProductMedium = ref<MediumResponse[]>([])
   const currentRelatedProducts = ref<ShortProduct[]>([])
+  const currentProductAttributes = ref<ProductAttributesResponse | null>(null)
   const { toast } = useToast()
 
   const getProducts = async (payload: IProductRequest): Promise<void> => {
@@ -158,6 +159,40 @@ export const useProductStore = defineStore('product', () => {
     }
   }
 
+  const getProductAttributes = async (uuid: string): Promise<void> => {
+    try {
+      currentProductAttributes.value = await ProductService.getProductAttributes(uuid)
+    } catch (error: any) {
+      toast({
+        title: 'Error fetching product attributes',
+        description: error.message || 'An error occurred while fetching product attributes.',
+        variant: 'destructive',
+      })
+      throw error
+    }
+  }
+
+  const syncProductAttributes = async (
+    uuid: string,
+    attributeValueIds: string[],
+  ): Promise<void> => {
+    try {
+      const payload = { attribute_value_ids: attributeValueIds }
+      await ProductService.syncProductAttributes(uuid, payload)
+      toast({
+        title: '✅ Product attributes updated',
+        variant: 'success',
+      })
+    } catch (error: any) {
+      toast({
+        title: 'Error syncing product attributes',
+        description: error.message || 'An error occurred while syncing product attributes.',
+        variant: 'destructive',
+      })
+      throw error
+    }
+  }
+
   return {
     // state
     isLoading,
@@ -165,6 +200,7 @@ export const useProductStore = defineStore('product', () => {
     currentProduct,
     currentProductMedium,
     currentRelatedProducts,
+    currentProductAttributes,
     // methods
     createProduct,
     updateProduct,
@@ -173,5 +209,7 @@ export const useProductStore = defineStore('product', () => {
     getProductsWithMedium,
     getRelatedProducts,
     syncRelatedProducts,
+    getProductAttributes,
+    syncProductAttributes,
   }
 })

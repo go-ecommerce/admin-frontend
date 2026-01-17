@@ -1,5 +1,6 @@
 import { api } from '@/api/api'
 import type {
+  IAttributeFindRequest,
   IAttributeGroupFindRequest,
   IAttributeGroupRequest,
   IAttributeGroupResponse,
@@ -86,6 +87,13 @@ export default class AttributeService {
 
   public static async deleteApiAttribute(id: string): Promise<void> {
     await api.delete(`/attribute/${id}`)
+  }
+
+  public static async findApiAttribute(
+    payload: IAttributeFindRequest,
+  ): Promise<IAttributeResponse> {
+    const { data }: any = await api.get(`/attribute/find`, payload)
+    return data
   }
 
   // AttributeValue methods

@@ -48,7 +48,7 @@
             <div v-if="file.type.startsWith('image/')" class="mb-2">
               <img
                 :src="getFilePreview(file)"
-                class="h-32 w-32 rounded-md object-cover"
+                class="h-32 w-32 min-w-32 rounded-md object-cover"
                 alt="image"
               />
             </div>

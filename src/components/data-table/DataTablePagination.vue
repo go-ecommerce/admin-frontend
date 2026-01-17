@@ -9,6 +9,7 @@ import {
   PaginationFirst,
   PaginationLast,
   PaginationNext,
+  PaginationPrevious,
 } from '@/components/ui/pagination'
 import {
   Select,
@@ -64,8 +65,8 @@ const recordRange = computed(() => {
       </Select>
     </div>
 
-    <div class="flex items-center space-x-4">
-      <span class="text-sm">
+    <div class="flex items-center gap-4">
+      <span class="text-sm whitespace-nowrap">
         {{ recordRange }}
       </span>
       <Pagination :items-per-page="10">
@@ -74,7 +75,7 @@ const recordRange = computed(() => {
             :disabled="!props.table.getCanPreviousPage()"
             @click="props.table.setPageIndex(0)"
           />
-          <PaginationPrev
+          <PaginationPrevious
             :disabled="!props.table.getCanPreviousPage()"
             @click="props.table.previousPage()"
           />

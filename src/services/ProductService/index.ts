@@ -1,5 +1,5 @@
 import { api } from '@/api/api'
-import type { IProductRequest, IProductResponse } from '@/utils/types/api/apiGo.ts'
+import type { IProductRequest, IProductResponse, ProductAttributesResponse } from '@/utils/types/api/apiGo.ts'
 import type {
   CreateProductRequest,
   ProductResponse,
@@ -55,5 +55,17 @@ export default class ProductService {
   public static async getRelatedProducts(uuid: string): Promise<ShortProduct[]> {
     const { data }: any = await api.get(`/product/id/${uuid}/related_product`)
     return data
+  }
+
+  public static async syncProductAttributes(
+    uuid: string,
+    payload: { attribute_value_ids: string[] },
+  ): Promise<void> {
+    await api.post(`/product/${uuid}/sync-attribute`, payload)
+  }
+
+  public static async getProductAttributes(uuid: string): Promise<ProductAttributesResponse> {
+    const { data }: any = await api.get(`/product/id/${uuid}/attributes`)
+    return data.data || data
   }
 }

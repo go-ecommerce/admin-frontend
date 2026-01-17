@@ -11,6 +11,7 @@ import ProductMetaForm from '@/components/product/ProductMetaForm.vue'
 import ProductPhysicalAttribute from '@/components/product/ProductPhysicalAttribute.vue'
 import ProductStockForm from '@/components/product/ProductStockForm.vue'
 import RelatedProductsForm from '@/components/product/RelatedProductsForm.vue'
+import ProductAttributesForm from '@/components/product/ProductAttributesForm.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FileUpload, FileUploadGrid, FileUploaded } from '@/components/ui/file-upload'
@@ -34,9 +35,25 @@ const route = useRoute()
 const { toast } = useToast()
 
 const productStore = useProductStore()
-const { getProductsWithMedium, updateProduct, getRelatedProducts, syncRelatedProducts } =
-  productStore
-const { currentProduct, currentProductMedium, currentRelatedProducts } = storeToRefs(productStore)
+const {
+  getProductsWithMedium,
+  updateProduct,
+  getRelatedProducts,
+  syncRelatedProducts,
+  getProductAttributes,
+  syncProductAttributes,
+} = productStore
+const { currentProduct, currentProductMedium, currentRelatedProducts, currentProductAttributes } =
+  storeToRefs(productStore)
+
+// Separate ref for attribute_value_ids to sync (updated by ProductAttributesForm emit)
+const selectedAttributeValueIds = ref<string[]>([])
+const attributesWereModified = ref(false)
+
+const handleAttributesUpdate = (valueIds: string[]) => {
+  selectedAttributeValueIds.value = valueIds
+  attributesWereModified.value = true
+}
 
 const files = ref([])
 const loadFile = async () => {
@@ -87,6 +104,11 @@ const updateAll = async () => {
       await syncRelatedProducts(uuid, productIds)
     }
 
+    // Sync product attributes (sync even if empty - means all attributes were removed)
+    if (uuid && attributesWereModified.value) {
+      await syncProductAttributes(uuid, selectedAttributeValueIds.value)
+    }
+
     await router.push({ name: 'product' })
   } catch (error) {
     await Promise.all(
@@ -107,6 +129,20 @@ onMounted(async () => {
     try {
       await getProductsWithMedium(uuid)
       await getRelatedProducts(uuid)
+      await getProductAttributes(uuid)
+
+      // Initialize selectedAttributeValueIds from loaded attributes
+      if (currentProductAttributes.value?.groups) {
+        const valueIds: string[] = []
+        for (const group of currentProductAttributes.value.groups) {
+          for (const attr of group.attributes) {
+            if (attr.values && attr.values.length > 0) {
+              valueIds.push(attr.values[0].id)
+            }
+          }
+        }
+        selectedAttributeValueIds.value = valueIds
+      }
     } catch (error: any) {
       toast({
         title: 'Ошибка загрузки Товара',
@@ -149,9 +185,10 @@ onMounted(async () => {
   </div>
   <main class="p-4 sm:px-6 sm:py-0 md:gap-8" v-if="currentProduct">
     <Tabs default-value="general" class="w-full">
-      <TabsList class="grid w-full grid-cols-2">
+      <TabsList class="grid w-full grid-cols-3">
         <TabsTrigger value="general">General Info</TabsTrigger>
         <TabsTrigger value="related">Related Products</TabsTrigger>
+        <TabsTrigger value="attributes">Attributes</TabsTrigger>
       </TabsList>
 
       <TabsContent value="general" class="space-y-6 mt-6">
@@ -269,6 +306,23 @@ onMounted(async () => {
           </CardHeader>
           <CardContent>
             <RelatedProductsForm v-model="currentRelatedProducts" />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="attributes" class="space-y-6 mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Attributes</CardTitle>
+            <p class="text-sm text-muted-foreground">
+              Manage product-specific attributes and their values
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ProductAttributesForm
+              :model-value="currentProductAttributes"
+              @update:model-value="handleAttributesUpdate"
+            />
           </CardContent>
         </Card>
       </TabsContent>

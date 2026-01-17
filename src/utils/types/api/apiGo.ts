@@ -7,6 +7,37 @@ import type {
   ProductResponse,
 } from '@/utils/types/api/generatedApiGo'
 
+// Product Attributes API response types
+export interface ProductAttributeValue {
+  id: string
+  value: string
+  value_normalized?: string
+  value_numeric?: string
+  display_order?: number
+}
+
+export interface ProductAttributeItem {
+  id: string
+  name: string
+  slug: string
+  type: string
+  unit?: string
+  is_filterable?: boolean
+  values: ProductAttributeValue[]
+}
+
+export interface ProductAttributeGroup {
+  group_id: string
+  group_name: string
+  group_slug: string
+  group_description?: string
+  attributes: ProductAttributeItem[]
+}
+
+export interface ProductAttributesResponse {
+  groups: ProductAttributeGroup[]
+}
+
 
 
 
@@ -64,6 +95,12 @@ export interface IAttributeGroupResponse {
 }
 
 export interface IAttributeRequest {
+  page: number
+  page_size: number
+}
+
+export interface IAttributeFindRequest {
+  attribute: string
   page: number
   page_size: number
 }

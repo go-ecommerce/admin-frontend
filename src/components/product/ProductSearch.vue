@@ -59,10 +59,8 @@ watchDebounced(
   { debounce: 300 },
 )
 
-const onProductSelect = (selected: unknown): void => {
-  console.log(selected)
+const onProductSelect = (selected: any): void => {
   emit('select', selected.detail.value)
-
   selectedProducts.value = [...(selectedProducts.value ?? []), ...selected.detail.value]
 }
 </script>

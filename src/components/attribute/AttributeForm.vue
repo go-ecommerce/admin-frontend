@@ -101,7 +101,7 @@ const generateSlug = (): void => {
       <div class="flex flex-col space-y-1.5">
         <Label for="type">Type</Label>
         <Select v-model="attributeType">
-          <SelectTrigger>
+          <SelectTrigger class="w-full">
             <SelectValue placeholder="Select type" />
           </SelectTrigger>
           <SelectContent>

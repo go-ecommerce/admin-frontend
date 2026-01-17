@@ -5,6 +5,7 @@ import { ref } from 'vue'
 import { useToast } from '@/components/ui/toast'
 import AttributeService from '@/services/AttributeService'
 import type {
+  IAttributeFindRequest,
   IAttributeGroupRequest,
   IAttributeGroupResponse,
   IAttributeRequest,
@@ -230,6 +231,22 @@ export const useAttributeStore = defineStore('attribute', () => {
     }
   }
 
+  const findAttributes = async (payload: IAttributeFindRequest): Promise<void> => {
+    try {
+      isLoading.value = true
+      attributes.value = await AttributeService.findApiAttribute(payload)
+    } catch (error: any) {
+      toast({
+        title: 'Error finding attributes',
+        description: error.message || 'An error occurred while finding attributes',
+        variant: 'destructive',
+      })
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   const clearCurrentAttribute = (): void => {
     currentAttribute.value = null
   }
@@ -383,6 +400,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     createAttribute,
     updateAttribute,
     deleteAttribute,
+    findAttributes,
     clearCurrentAttribute,
     clearCurrentAttributeGroup,
     getAttributeValues,
