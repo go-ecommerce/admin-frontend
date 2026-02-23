@@ -38,12 +38,38 @@ export const useProductStore = defineStore('product', () => {
   const currentRelatedProducts = ref<ShortProduct[]>([])
   const currentProductAttributes = ref<ProductAttributesResponse | null>(null)
   const currentProductVariants = ref<ProductVariantResponse[]>([])
+  const productsWithoutVariantsCount = ref<number>(0)
   const { toast } = useToast()
 
   const getProducts = async (payload: IProductRequest): Promise<void> => {
     try {
       isLoading.value = true
       products.value = await ProductService.getProducts(payload)
+    } catch (error: any) {
+      toast({
+        title: 'Error fetching products.',
+        description: error.message || 'An error occurred while fetching products.',
+        variant: 'destructive',
+      })
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const fetchProductsWithoutVariantsCount = async (): Promise<void> => {
+    try {
+      const result = await ProductService.getProductsWithoutVariants({ page: 1, page_size: 1 })
+      productsWithoutVariantsCount.value = result.pagination.total ?? 0
+    } catch {
+      productsWithoutVariantsCount.value = 0
+    }
+  }
+
+  const getProductsWithoutVariants = async (payload: IProductRequest): Promise<void> => {
+    try {
+      isLoading.value = true
+      products.value = await ProductService.getProductsWithoutVariants(payload)
     } catch (error: any) {
       toast({
         title: 'Error fetching products.',
@@ -288,6 +314,7 @@ export const useProductStore = defineStore('product', () => {
     isLoading,
     products,
     allVariants,
+    productsWithoutVariantsCount,
     currentProduct,
     currentProductMedium,
     currentRelatedProducts,
@@ -295,6 +322,8 @@ export const useProductStore = defineStore('product', () => {
     currentProductVariants,
     // methods
     getAllVariants,
+    getProductsWithoutVariants,
+    fetchProductsWithoutVariantsCount,
     createProduct,
     updateProduct,
     getProducts,

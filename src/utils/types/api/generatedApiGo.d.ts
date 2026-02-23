@@ -963,6 +963,7 @@ export interface GithubComStickproGoStoreInternalModelsCollection {
 export interface GithubComStickproGoStoreInternalModelsProduct {
   created_at?: PgtypeTimestamp;
   ean?: PgtypeText;
+  external_id?: PgtypeText;
   height?: number;
   id?: string;
   is_enable?: boolean;
@@ -989,6 +990,7 @@ export interface GithubComStickproGoStoreInternalModelsProduct {
 export interface GithubComStickproGoStoreInternalStorageRepositoryRepositoryProductsFindRow {
   created_at?: PgtypeTimestamp;
   ean?: PgtypeText;
+  external_id?: PgtypeText;
   height?: number;
   id?: string;
   is_enable?: boolean;

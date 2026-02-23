@@ -18,6 +18,11 @@ export default class ProductService {
     return data
   }
 
+  public static async getProductsWithoutVariants(payload: IProductRequest): Promise<IProductResponse> {
+    const { data }: any = await api.get('/product/list/without-variants', payload)
+    return data
+  }
+
   public static async getProductById(uuid: string): Promise<ProductResponse> {
     const { data }: any = await api.get(`/product/id/${uuid}`)
     return data
