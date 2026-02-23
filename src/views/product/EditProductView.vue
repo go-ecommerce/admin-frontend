@@ -5,13 +5,12 @@ import { storeToRefs } from 'pinia'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import ProductForm from '@/components/product/ProductForm.vue'
 import ProductIdentifierForm from '@/components/product/ProductIdentifierForm.vue'
-import ProductMetaForm from '@/components/product/ProductMetaForm.vue'
 import ProductPhysicalAttribute from '@/components/product/ProductPhysicalAttribute.vue'
 import ProductStockForm from '@/components/product/ProductStockForm.vue'
 import RelatedProductsForm from '@/components/product/RelatedProductsForm.vue'
 import ProductAttributesForm from '@/components/product/ProductAttributesForm.vue'
+import ProductVariantsForm from '@/components/product/ProductVariantsForm.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FileUpload, FileUploadGrid, FileUploaded } from '@/components/ui/file-upload'
@@ -28,7 +27,41 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/toast/use-toast'
 import MediaService from '@/services/MediaService'
 import { useProductStore } from '@/stores/product'
-import type { MediumResponse, UpdateProductRequest } from '@/utils/types/api/generatedApiGo'
+import { Input } from '@/components/ui/input'
+import type { MediumResponse } from '@/utils/types/api/generatedApiGo'
+
+interface EditFormState {
+  // Root fields
+  model: string
+  sku: string
+  upc: string
+  ean: string
+  jan: string
+  isbn: string
+  mpn: string
+  location: string
+  manufacturer_id: string | undefined
+  price: number
+  weight: number
+  length: number
+  width: number
+  height: number
+  quantity: number
+  stock_status: string
+  subtract: boolean
+  minimum: number
+  sort_order: number
+  is_enable: boolean
+  // Variant fields (flat for UI)
+  name: string
+  slug: string
+  description: string
+  meta_title: string
+  meta_h1: string
+  meta_description: string
+  meta_keyword: string
+  category_id: string | undefined
+}
 
 const router = useRouter()
 const route = useRoute()
@@ -42,11 +75,19 @@ const {
   syncRelatedProducts,
   getProductAttributes,
   syncProductAttributes,
+  getProductVariants,
+  createProductVariant,
+  updateProductVariant,
+  deleteProductVariant,
 } = productStore
-const { currentProduct, currentProductMedium, currentRelatedProducts, currentProductAttributes } =
-  storeToRefs(productStore)
+const {
+  currentProduct,
+  currentProductMedium,
+  currentRelatedProducts,
+  currentProductAttributes,
+  currentProductVariants,
+} = storeToRefs(productStore)
 
-// Separate ref for attribute_value_ids to sync (updated by ProductAttributesForm emit)
 const selectedAttributeValueIds = ref<string[]>([])
 const attributesWereModified = ref(false)
 
@@ -55,11 +96,41 @@ const handleAttributesUpdate = (valueIds: string[]) => {
   attributesWereModified.value = true
 }
 
+const editInfo = ref<EditFormState>({
+  model: '',
+  sku: '',
+  upc: '',
+  ean: '',
+  jan: '',
+  isbn: '',
+  mpn: '',
+  location: '',
+  manufacturer_id: undefined,
+  price: 0,
+  weight: 0,
+  length: 0,
+  width: 0,
+  height: 0,
+  quantity: 0,
+  stock_status: 'IN_STOCK',
+  subtract: true,
+  minimum: 1,
+  sort_order: 0,
+  is_enable: true,
+  name: '',
+  slug: '',
+  description: '',
+  meta_title: '',
+  meta_h1: '',
+  meta_description: '',
+  meta_keyword: '',
+  category_id: undefined,
+})
+
 const files = ref([])
 const loadFile = async () => {
   const uploads = files.value.map((file) => MediaService.uploadFile(file))
-  const uploadedFiles = await Promise.all(uploads)
-  return uploadedFiles
+  return await Promise.all(uploads)
 }
 const handleFilesChange = (newFiles: any) => {
   files.value = newFiles
@@ -71,32 +142,54 @@ const updateAll = async () => {
   try {
     uploadedFiles = await loadFile()
 
-    const updateResquest = {
-      ...currentProduct.value,
-      manufacturer_id: undefined, // todo make normal omitempty
-      media_ids: [] as string[],
-    } as UpdateProductRequest
-
-    updateResquest.media_ids = currentProductMedium.value
+    const existingMediaIds = currentProductMedium.value
       .map((file) => file.id)
       .filter((id): id is string => typeof id === 'string')
 
-    if (uploadedFiles.length > 0) {
-      const mediaIDs = uploadedFiles
-        .map((file) => file.id)
-        .filter((id): id is string => typeof id === 'string')
-      updateResquest.media_ids.push(...mediaIDs)
-    }
+    const newMediaIds = uploadedFiles
+      .map((file) => file.id)
+      .filter((id): id is string => typeof id === 'string')
 
-    // Подставляем путь первого media файла в поле image
     const allMediaFiles = [...currentProductMedium.value, ...uploadedFiles]
-    if (allMediaFiles.length > 0 && allMediaFiles[0].path) {
-      updateResquest.image = allMediaFiles[0].path
-    }
+    const firstImagePath = allMediaFiles[0]?.path
 
-    await updateProduct(updateResquest)
+    await updateProduct({
+      model: editInfo.value.model,
+      sku: editInfo.value.sku,
+      upc: editInfo.value.upc,
+      ean: editInfo.value.ean,
+      jan: editInfo.value.jan,
+      isbn: editInfo.value.isbn,
+      mpn: editInfo.value.mpn,
+      location: editInfo.value.location,
+      price: editInfo.value.price,
+      weight: editInfo.value.weight,
+      length: editInfo.value.length,
+      width: editInfo.value.width,
+      height: editInfo.value.height,
+      quantity: editInfo.value.quantity,
+      stock_status: editInfo.value.stock_status,
+      subtract: editInfo.value.subtract,
+      minimum: editInfo.value.minimum,
+      sort_order: editInfo.value.sort_order,
+      is_enable: editInfo.value.is_enable,
+      media_ids: [...existingMediaIds, ...newMediaIds],
+      variant: {
+        id: currentProduct.value?.variant?.id || '',
+        name: editInfo.value.name,
+        slug: editInfo.value.slug,
+        description: editInfo.value.description,
+        meta_title: editInfo.value.meta_title,
+        meta_h1: editInfo.value.meta_h1,
+        meta_description: editInfo.value.meta_description,
+        meta_keyword: editInfo.value.meta_keyword,
+        category_id: editInfo.value.category_id,
+        image: firstImagePath,
+        is_enable: editInfo.value.is_enable,
+        sort_order: editInfo.value.sort_order,
+      },
+    })
 
-    // Sync related products
     if (uuid && currentRelatedProducts.value.length >= 0) {
       const productIds = currentRelatedProducts.value
         .map((p) => p.id)
@@ -104,7 +197,6 @@ const updateAll = async () => {
       await syncRelatedProducts(uuid, productIds)
     }
 
-    // Sync product attributes (sync even if empty - means all attributes were removed)
     if (uuid && attributesWereModified.value) {
       await syncProductAttributes(uuid, selectedAttributeValueIds.value)
     }
@@ -130,8 +222,42 @@ onMounted(async () => {
       await getProductsWithMedium(uuid)
       await getRelatedProducts(uuid)
       await getProductAttributes(uuid)
+      await getProductVariants(uuid)
 
-      // Initialize selectedAttributeValueIds from loaded attributes
+      const p = currentProduct.value
+      if (p) {
+        editInfo.value = {
+          model: p.model || '',
+          sku: p.sku || '',
+          upc: p.upc || '',
+          ean: p.ean || '',
+          jan: p.jan || '',
+          isbn: p.isbn || '',
+          mpn: p.mpn || '',
+          location: p.location || '',
+          manufacturer_id: p.manufacturer_id?.uuid,
+          price: p.price || 0,
+          weight: p.weight || 0,
+          length: p.length || 0,
+          width: p.width || 0,
+          height: p.height || 0,
+          quantity: p.quantity || 0,
+          stock_status: p.stock_status || 'IN_STOCK',
+          subtract: p.subtract ?? true,
+          minimum: p.minimum || 1,
+          sort_order: p.sort_order || 0,
+          is_enable: p.is_enable ?? true,
+          name: p.variant?.name || '',
+          slug: p.variant?.slug || '',
+          description: p.variant?.description || '',
+          meta_title: p.variant?.meta_title || '',
+          meta_h1: p.variant?.meta_h1 || '',
+          meta_description: p.variant?.meta_description || '',
+          meta_keyword: p.variant?.meta_keyword || '',
+          category_id: p.variant?.category_id?.uuid,
+        }
+      }
+
       if (currentProductAttributes.value?.groups) {
         const valueIds: string[] = []
         for (const group of currentProductAttributes.value.groups) {
@@ -174,7 +300,7 @@ onMounted(async () => {
         </Button>
         <div class="text-2xl sr-only sm:not-sr-only sm:whitespace-nowrap">
           Редактирование Товара
-          <span class="text-3xl font-semibold">{{ currentProduct?.name }} </span>
+          <span class="text-3xl font-semibold">{{ editInfo.model }}</span>
         </div>
       </div>
       <Button size="sm" class="h-7 gap-1" @click="updateAll()">
@@ -185,8 +311,9 @@ onMounted(async () => {
   </div>
   <main class="p-4 sm:px-6 sm:py-0 md:gap-8" v-if="currentProduct">
     <Tabs default-value="general" class="w-full">
-      <TabsList class="grid w-full grid-cols-3">
+      <TabsList class="grid w-full grid-cols-4">
         <TabsTrigger value="general">General Info</TabsTrigger>
+        <TabsTrigger value="variants">Variants</TabsTrigger>
         <TabsTrigger value="related">Related Products</TabsTrigger>
         <TabsTrigger value="attributes">Attributes</TabsTrigger>
       </TabsList>
@@ -199,15 +326,10 @@ onMounted(async () => {
                 <CardTitle>Product info</CardTitle>
               </CardHeader>
               <CardContent>
-                <ProductForm v-model="currentProduct" />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Meta information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ProductMetaForm v-model="currentProduct" />
+                <div class="flex flex-col space-y-1.5">
+                  <Label for="model">Model</Label>
+                  <Input id="model" v-model="editInfo.model" placeholder="Model of your product" />
+                </div>
               </CardContent>
             </Card>
             <Card>
@@ -215,7 +337,7 @@ onMounted(async () => {
                 <CardTitle>Identifier</CardTitle>
               </CardHeader>
               <CardContent>
-                <ProductIdentifierForm v-model="currentProduct" />
+                <ProductIdentifierForm v-model="editInfo" />
               </CardContent>
             </Card>
           </div>
@@ -225,7 +347,7 @@ onMounted(async () => {
                 <CardTitle>Addition Info</CardTitle>
               </CardHeader>
               <CardContent>
-                <NumberField v-model="currentProduct.sort_order">
+                <NumberField v-model="editInfo.sort_order">
                   <Label>Sort order</Label>
                   <NumberFieldContent>
                     <NumberFieldDecrement />
@@ -247,7 +369,7 @@ onMounted(async () => {
                 <p class="text-sm text-muted-foreground">Product status show product on catalog</p>
               </div>
               <div>
-                <Switch v-model="currentProduct.is_enable" />
+                <Switch v-model="editInfo.is_enable" />
               </div>
             </div>
             <Card>
@@ -269,7 +391,7 @@ onMounted(async () => {
                 <CardTitle>Price</CardTitle>
               </CardHeader>
               <CardContent>
-                <NumberField v-model="currentProduct.price">
+                <NumberField v-model="editInfo.price">
                   <Label>Price</Label>
                   <NumberFieldContent>
                     <NumberFieldDecrement />
@@ -284,7 +406,7 @@ onMounted(async () => {
                 <CardTitle>Stocks</CardTitle>
               </CardHeader>
               <CardContent>
-                <ProductStockForm v-model="currentProduct" />
+                <ProductStockForm v-model="editInfo" />
               </CardContent>
             </Card>
             <Card>
@@ -292,11 +414,31 @@ onMounted(async () => {
                 <CardTitle>Phisical Attribute</CardTitle>
               </CardHeader>
               <CardContent>
-                <ProductPhysicalAttribute v-model="currentProduct" />
+                <ProductPhysicalAttribute v-model="editInfo" />
               </CardContent>
             </Card>
           </div>
         </div>
+      </TabsContent>
+
+      <TabsContent value="variants" class="space-y-6 mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Варианты товара</CardTitle>
+            <p class="text-sm text-muted-foreground">
+              Один товар может присутствовать в нескольких категориях с разными названиями и описаниями
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ProductVariantsForm
+              :product-id="uuid"
+              :variants="currentProductVariants"
+              @create="(payload) => createProductVariant(uuid, payload)"
+              @update="(variantId, payload) => updateProductVariant(uuid, variantId, payload)"
+              @delete="(variantId) => deleteProductVariant(uuid, variantId)"
+            />
+          </CardContent>
+        </Card>
       </TabsContent>
 
       <TabsContent value="related" class="space-y-6 mt-6">

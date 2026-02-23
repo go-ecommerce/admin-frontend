@@ -17,7 +17,6 @@ defineProps<{
   products: IProductResponse
   isLoading: boolean
 }>()
-const fileStorageUrl = import.meta.env.VITE_FILE_STORAGE_URL || 'http://localhost:3000/storage/'
 
 const columns: ColumnDef<any>[] = [
   {
@@ -42,32 +41,48 @@ const columns: ColumnDef<any>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'image', // Adjust this key to match your data property
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Image' }),
+    accessorKey: 'model',
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Model' }),
+    cell: ({ row }) => h('div', { class: 'font-medium' }, row.getValue('model') ?? '—'),
+  },
+  {
+    accessorKey: 'sku',
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'SKU' }),
+    cell: ({ row }) => h('div', { class: 'text-sm text-muted-foreground' }, row.getValue('sku') ?? '—'),
+  },
+  {
+    accessorKey: 'price',
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Price' }),
+    cell: ({ row }) => h('div', {}, row.getValue('price') ?? '—'),
+  },
+  {
+    accessorKey: 'quantity',
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Qty' }),
+    cell: ({ row }) => h('div', {}, row.getValue('quantity') ?? '—'),
+  },
+  {
+    accessorKey: 'stock_status',
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Stock' }),
     cell: ({ row }) => {
-      const imagePath = fileStorageUrl + row.getValue('image')
-      return h('div', { class: 'w-20' }, [
-        imagePath
-          ? h('img', {
-              src: imagePath,
-              alt: row.getValue('name') || 'Product image',
-              class: 'h-12 w-12 object-cover rounded', // Adjust styling as needed
-            })
-          : h('span', 'No image'),
-      ])
+      const status = row.getValue('stock_status') as string
+      const map: Record<string, { label: string; class: string }> = {
+        IN_STOCK:   { label: 'In Stock',   class: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+        PRE_ORDER:  { label: 'Pre-Order',  class: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+        OUT_OF_STOCK: { label: 'Out of Stock', class: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+      }
+      const s = map[status] ?? { label: status ?? '—', class: 'bg-muted text-muted-foreground' }
+      return h('span', { class: `text-xs px-2 py-0.5 rounded-full ${s.class}` }, s.label)
     },
-    enableSorting: false,
-    enableHiding: false,
   },
   {
-    accessorKey: 'name',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Name' }),
-    cell: ({ row }) => h('div', { class: 'w-20' }, row.getValue('name')),
-  },
-  {
-    accessorKey: 'slug',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Slug' }),
-    cell: ({ row }) => h('div', { class: 'w-20' }, row.getValue('slug')),
+    accessorKey: 'is_enable',
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Status' }),
+    cell: ({ row }) => {
+      const enabled = row.getValue('is_enable')
+      return h('span', {
+        class: `text-xs px-2 py-0.5 rounded-full ${enabled ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-muted text-muted-foreground'}`
+      }, enabled ? 'Active' : 'Disabled')
+    },
   },
 
   {

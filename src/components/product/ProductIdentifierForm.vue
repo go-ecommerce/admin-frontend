@@ -26,7 +26,7 @@ watch(
     productEan.value = newValue.ean || ''
     productJan.value = newValue.jan || ''
     productIsbn.value = newValue.isbn || ''
-    productMpn.value = newValue.Mpn || ''
+    productMpn.value = newValue.mpn || ''
   },
   { immediate: true },
 )

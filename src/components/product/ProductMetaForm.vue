@@ -19,10 +19,10 @@ const productMetaDescription = ref<string>('')
 watch(
   () => props.modelValue,
   (newValue) => {
-    productMetaTitle.value = newValue.metaTitle || ''
-    productMetaH1.value = newValue.metaH1 || ''
-    productMetaKeyword.value = newValue.metaKeyword || ''
-    productMetaDescription.value = newValue.metaDescription || ''
+    productMetaTitle.value = newValue.meta_title || ''
+    productMetaH1.value = newValue.meta_h1 || ''
+    productMetaKeyword.value = newValue.meta_keyword || ''
+    productMetaDescription.value = newValue.meta_description || ''
   },
   { immediate: true },
 )

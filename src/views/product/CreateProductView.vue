@@ -25,26 +25,48 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import MediaService from '@/services/MediaService'
 import { useProductStore } from '@/stores/product'
-import type {
-  CreateProductRequest,
-  MediumResponse,
-  ShortProduct,
-} from '@/utils/types/api/generatedApiGo'
+import type { MediumResponse, ShortProduct } from '@/utils/types/api/generatedApiGo'
+
+interface ProductFormState {
+  // Root fields
+  model: string
+  sku: string
+  upc: string
+  ean: string
+  jan: string
+  isbn: string
+  mpn: string
+  location: string
+  manufacturer_id: string | undefined
+  price: number
+  weight: number
+  length: number
+  width: number
+  height: number
+  quantity: number
+  stock_status: string
+  subtract: boolean
+  minimum: number
+  sort_order: number
+  is_enable: boolean
+  // Variant fields (flat for UI)
+  name: string
+  slug: string
+  description: string
+  meta_title: string
+  meta_h1: string
+  meta_description: string
+  meta_keyword: string
+  category_id: string | undefined
+}
 
 const router = useRouter()
 const { createProduct, syncRelatedProducts } = useProductStore()
 
 const relatedProducts = ref<ShortProduct[]>([])
 
-const productInfo = ref<CreateProductRequest>({
-  name: '',
+const productInfo = ref<ProductFormState>({
   model: '',
-  slug: '',
-  description: '',
-  meta_title: '',
-  meta_h1: '',
-  meta_description: '',
-  meta_keyword: '',
   sku: '',
   upc: '',
   ean: '',
@@ -52,20 +74,26 @@ const productInfo = ref<CreateProductRequest>({
   isbn: '',
   mpn: '',
   location: '',
+  manufacturer_id: undefined,
+  price: 0,
+  weight: 0,
+  length: 0,
+  width: 0,
+  height: 0,
   quantity: 0,
   stock_status: 'IN_STOCK',
-  image: '',
-  manufacturer_id: undefined,
-  price: 0.0,
-  weight: 0.0,
-  length: 0.0,
-  width: 0.0,
-  height: 0.0,
   subtract: true,
   minimum: 1,
-  sort_order: 1,
+  sort_order: 0,
   is_enable: true,
-  media_ids: [],
+  name: '',
+  slug: '',
+  description: '',
+  meta_title: '',
+  meta_h1: '',
+  meta_description: '',
+  meta_keyword: '',
+  category_id: undefined,
 })
 
 const saveAll = async () => {
@@ -75,18 +103,48 @@ const saveAll = async () => {
   try {
     uploadedFiles = await loadFile()
 
-    productInfo.value.media_ids = uploadedFiles
+    const mediaIds = uploadedFiles
       .map((file) => file.id)
       .filter((id): id is string => typeof id === 'string')
 
-    if (uploadedFiles.length > 0) {
-      productInfo.value.image = uploadedFiles[0].path
-    }
-
-    const createdProduct = await createProduct(productInfo.value)
+    const createdProduct = await createProduct({
+      model: productInfo.value.model,
+      sku: productInfo.value.sku,
+      upc: productInfo.value.upc,
+      ean: productInfo.value.ean,
+      jan: productInfo.value.jan,
+      isbn: productInfo.value.isbn,
+      mpn: productInfo.value.mpn,
+      location: productInfo.value.location,
+      manufacturer_id: productInfo.value.manufacturer_id,
+      price: productInfo.value.price,
+      weight: productInfo.value.weight,
+      length: productInfo.value.length,
+      width: productInfo.value.width,
+      height: productInfo.value.height,
+      quantity: productInfo.value.quantity,
+      stock_status: productInfo.value.stock_status,
+      subtract: productInfo.value.subtract,
+      minimum: productInfo.value.minimum,
+      sort_order: productInfo.value.sort_order,
+      is_enable: productInfo.value.is_enable,
+      media_ids: mediaIds,
+      variant: {
+        name: productInfo.value.name,
+        slug: productInfo.value.slug,
+        description: productInfo.value.description,
+        meta_title: productInfo.value.meta_title,
+        meta_h1: productInfo.value.meta_h1,
+        meta_description: productInfo.value.meta_description,
+        meta_keyword: productInfo.value.meta_keyword,
+        category_id: productInfo.value.category_id,
+        image: uploadedFiles[0]?.path,
+        is_enable: productInfo.value.is_enable,
+        sort_order: productInfo.value.sort_order,
+      },
+    })
     createdProductId = createdProduct?.id
 
-    // Sync related products if any and product was created
     if (createdProductId && relatedProducts.value.length > 0) {
       const productIds = relatedProducts.value
         .map((p) => p.id)

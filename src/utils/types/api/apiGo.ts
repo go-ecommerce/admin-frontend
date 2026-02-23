@@ -5,6 +5,7 @@ import type {
   CategoryResponse,
   CollectionResponse,
   ProductResponse,
+  ProductVariantListItem,
 } from '@/utils/types/api/generatedApiGo'
 
 // Product Attributes API response types
@@ -37,9 +38,6 @@ export interface ProductAttributeGroup {
 export interface ProductAttributesResponse {
   groups: ProductAttributeGroup[]
 }
-
-
-
 
 
 export interface ICategoryRequest {
@@ -75,6 +73,11 @@ export interface IProductRequest {
 
 export interface IProductResponse {
   items: ProductResponse[]
+  pagination: IPagination
+}
+
+export interface IVariantListResponse {
+  items: ProductVariantListItem[]
   pagination: IPagination
 }
 

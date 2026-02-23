@@ -4,33 +4,40 @@ import { ref } from 'vue'
 
 import { useToast } from '@/components/ui/toast'
 import ProductService from '@/services/ProductService'
-import type { IProductRequest, IProductResponse, ProductAttributesResponse } from '@/utils/types/api/apiGo.ts'
+import type { IProductRequest, IProductResponse, IVariantListResponse, ProductAttributesResponse } from '@/utils/types/api/apiGo.ts'
 import type {
   CreateProductRequest,
+  CreateProductVariantRequest,
   MediumResponse,
   ProductResponse,
+  ProductVariantResponse,
   UpdateProductRequest,
+  UpdateProductVariantRequest,
   ShortProduct,
   SyncRelatedProductRequest,
 } from '@/utils/types/api/generatedApiGo'
 
+const defaultPagination = { page: 1, page_size: 10, total: 0, last_page: 1 }
+
 const defaultDataProducts: IProductResponse = {
   items: [],
-  pagination: {
-    page: 1,
-    page_size: 10,
-    total: 100,
-    last_page: 1,
-  },
+  pagination: { ...defaultPagination },
+}
+
+const defaultDataVariants: IVariantListResponse = {
+  items: [],
+  pagination: { ...defaultPagination },
 }
 
 export const useProductStore = defineStore('product', () => {
   const isLoading = ref<boolean>(true)
   const products = ref<IProductResponse>(defaultDataProducts)
+  const allVariants = ref<IVariantListResponse>(defaultDataVariants)
   const currentProduct = ref<ProductResponse | null>(null)
   const currentProductMedium = ref<MediumResponse[]>([])
   const currentRelatedProducts = ref<ShortProduct[]>([])
   const currentProductAttributes = ref<ProductAttributesResponse | null>(null)
+  const currentProductVariants = ref<ProductVariantResponse[]>([])
   const { toast } = useToast()
 
   const getProducts = async (payload: IProductRequest): Promise<void> => {
@@ -141,9 +148,9 @@ export const useProductStore = defineStore('product', () => {
     }
   }
 
-  const syncRelatedProducts = async (uuid: string, productIds: string[]): Promise<void> => {
+  const syncRelatedProducts = async (uuid: string, variantIds: string[]): Promise<void> => {
     try {
-      const payload: SyncRelatedProductRequest = { product_ids: productIds }
+      const payload: SyncRelatedProductRequest = { variant_ids: variantIds }
       await ProductService.syncRelatedProducts(uuid, payload)
       toast({
         title: '✅ Related products updated',
@@ -193,15 +200,101 @@ export const useProductStore = defineStore('product', () => {
     }
   }
 
+  const getAllVariants = async (payload: IProductRequest): Promise<void> => {
+    try {
+      isLoading.value = true
+      allVariants.value = await ProductService.getAllVariants(payload)
+    } catch (error: any) {
+      toast({
+        title: 'Error fetching variants',
+        description: error.message || 'An error occurred while fetching variants.',
+        variant: 'destructive',
+      })
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const getProductVariants = async (productId: string): Promise<void> => {
+    try {
+      currentProductVariants.value = await ProductService.getProductVariants(productId)
+    } catch (error: any) {
+      toast({
+        title: 'Error fetching variants',
+        description: error.message || 'An error occurred while fetching variants.',
+        variant: 'destructive',
+      })
+      throw error
+    }
+  }
+
+  const createProductVariant = async (
+    productId: string,
+    request: CreateProductVariantRequest,
+  ): Promise<ProductVariantResponse> => {
+    try {
+      const variant = await ProductService.createProductVariant(productId, request)
+      currentProductVariants.value.push(variant)
+      toast({ title: '✅ Вариант создан', variant: 'success' })
+      return variant
+    } catch (error: any) {
+      toast({
+        title: 'Error creating variant',
+        description: error.message || 'An error occurred while creating variant.',
+        variant: 'destructive',
+      })
+      throw error
+    }
+  }
+
+  const updateProductVariant = async (
+    productId: string,
+    variantId: string,
+    request: UpdateProductVariantRequest,
+  ): Promise<void> => {
+    try {
+      const updated = await ProductService.updateProductVariant(productId, variantId, request)
+      const idx = currentProductVariants.value.findIndex((v) => v.id === variantId)
+      if (idx !== -1) currentProductVariants.value[idx] = updated
+      toast({ title: '✅ Вариант обновлён', variant: 'success' })
+    } catch (error: any) {
+      toast({
+        title: 'Error updating variant',
+        description: error.message || 'An error occurred while updating variant.',
+        variant: 'destructive',
+      })
+      throw error
+    }
+  }
+
+  const deleteProductVariant = async (productId: string, variantId: string): Promise<void> => {
+    try {
+      await ProductService.deleteProductVariant(productId, variantId)
+      currentProductVariants.value = currentProductVariants.value.filter((v) => v.id !== variantId)
+      toast({ title: '✅ Вариант удалён', variant: 'success' })
+    } catch (error: any) {
+      toast({
+        title: 'Error deleting variant',
+        description: error.message || 'An error occurred while deleting variant.',
+        variant: 'destructive',
+      })
+      throw error
+    }
+  }
+
   return {
     // state
     isLoading,
     products,
+    allVariants,
     currentProduct,
     currentProductMedium,
     currentRelatedProducts,
     currentProductAttributes,
+    currentProductVariants,
     // methods
+    getAllVariants,
     createProduct,
     updateProduct,
     getProducts,
@@ -211,5 +304,9 @@ export const useProductStore = defineStore('product', () => {
     syncRelatedProducts,
     getProductAttributes,
     syncProductAttributes,
+    getProductVariants,
+    createProductVariant,
+    updateProductVariant,
+    deleteProductVariant,
   }
 })
