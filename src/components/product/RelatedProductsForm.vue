@@ -1,96 +1,137 @@
 <script setup lang="ts">
-import { Trash2 } from 'lucide-vue-next'
-import { ref, watch } from 'vue'
+import { Loader2, Package, Save, X } from 'lucide-vue-next'
+import { ref, watch, computed, onMounted } from 'vue'
 
 import ProductSearch from '@/components/product/ProductSearch.vue'
 import { Button } from '@/components/ui/button'
-import type { ProductResponse, ShortProduct } from '@/utils/types/api/generatedApiGo'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useToast } from '@/components/ui/toast/use-toast'
+import ProductService from '@/services/ProductService'
+import type { ProductVariantResponse, ShortProduct } from '@/utils/types/api/generatedApiGo'
 
 const props = defineProps<{
-  modelValue?: ShortProduct[]
+  variants: ProductVariantResponse[]
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: ShortProduct[]): void
-}>()
+const { toast } = useToast()
 
-const relatedProducts = ref<ShortProduct[]>(props.modelValue || [])
+const selectedVariantId = ref<string>('')
+const relatedMap = ref<Record<string, ShortProduct[]>>({})
+const loading = ref(false)
+const saving = ref(false)
+
+const currentRelated = computed({
+  get: () => relatedMap.value[selectedVariantId.value] ?? [],
+  set: (val) => {
+    relatedMap.value = { ...relatedMap.value, [selectedVariantId.value]: val }
+  },
+})
+
+onMounted(async () => {
+  const ids = props.variants.map((v) => v.id!).filter(Boolean)
+  if (!ids.length) return
+
+  selectedVariantId.value = ids[0]
+  loading.value = true
+  try {
+    relatedMap.value = await ProductService.getRelatedProductsBatch(ids)
+  } catch {
+    relatedMap.value = {}
+  } finally {
+    loading.value = false
+  }
+})
 
 watch(
-  () => props.modelValue,
-  (newValue) => {
-    relatedProducts.value = newValue || []
+  () => props.variants,
+  (variants) => {
+    if (variants.length && !selectedVariantId.value) {
+      selectedVariantId.value = variants[0]?.id ?? ''
+    }
   },
 )
 
-const onProductSelect = (product: ProductResponse) => {
-  // Конвертируем ProductResponse в ShortProduct
-  const shortProduct: ShortProduct = {
-    id: product.id,
-    name: product.name,
-    model: product.model,
-    price: product.price,
-    slug: product.slug,
-    image: product.image ? { string: product.image, valid: true } : undefined,
-    is_enable: product.is_enable,
-  }
-
-  const exists = relatedProducts.value.find((p) => p.id === shortProduct.id)
-  if (!exists) {
-    relatedProducts.value = [...relatedProducts.value, shortProduct]
-    emit('update:modelValue', relatedProducts.value)
-  }
+const remove = (id: string | undefined) => {
+  currentRelated.value = currentRelated.value.filter((p) => p.id !== id)
 }
 
-const removeProduct = (productId: string | undefined) => {
-  if (!productId) return
-  relatedProducts.value = relatedProducts.value.filter((p) => p.id !== productId)
-  emit('update:modelValue', relatedProducts.value)
+const save = async () => {
+  saving.value = true
+  try {
+    const ids = currentRelated.value.map((p) => p.id!).filter(Boolean)
+    await ProductService.syncRelatedProducts(selectedVariantId.value, { variant_ids: ids })
+    toast({ title: '✅ Связанные товары сохранены', variant: 'success' })
+  } catch {
+    toast({ title: 'Ошибка сохранения', variant: 'destructive' })
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
 <template>
   <div class="space-y-4">
-    <div class="flex items-center gap-2">
-      <ProductSearch @select="onProductSelect" />
+    <Select v-model="selectedVariantId">
+      <SelectTrigger>
+        <SelectValue placeholder="Выберите вариант" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem v-for="v in variants" :key="v.id" :value="v.id!">
+          {{ v.name }}
+        </SelectItem>
+      </SelectContent>
+    </Select>
+
+    <div v-if="loading" class="space-y-2">
+      <Skeleton v-for="i in 3" :key="i" class="h-12 w-full" />
     </div>
 
-    <div v-if="relatedProducts.length > 0" class="space-y-2">
-      <div class="text-sm font-medium text-muted-foreground">
-        Selected Products ({{ relatedProducts.length }})
-      </div>
-      <div class="space-y-2">
+    <template v-else>
+      <ProductSearch
+        :model-value="currentRelated"
+        @update:model-value="currentRelated = $event"
+      />
+
+      <div v-if="currentRelated.length" class="border rounded-md divide-y">
         <div
-          v-for="product in relatedProducts"
+          v-for="product in currentRelated"
           :key="product.id"
-          class="flex items-center justify-between rounded-lg border p-3 hover:bg-accent/50 transition-colors"
+          class="flex items-center gap-3 px-3 py-2 group"
         >
-          <div class="flex items-center gap-3">
-            <img
-              v-if="product.image?.string"
-              :src="product.image.string"
-              :alt="product.name"
-              class="w-12 h-12 object-cover rounded"
-            />
-            <div class="w-12 h-12 bg-muted rounded flex items-center justify-center" v-else>
-              <span class="text-xs text-muted-foreground">No img</span>
-            </div>
-            <div>
-              <div class="font-medium">{{ product.name }}</div>
-              <div class="text-sm text-muted-foreground">
-                {{ product.model }} • {{ product.price }}₽
-              </div>
-            </div>
+          <Package class="h-4 w-4 shrink-0 text-muted-foreground" />
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium truncate">{{ product.name }}</div>
+            <div class="text-xs text-muted-foreground truncate">{{ product.model }}</div>
           </div>
-          <Button variant="ghost" size="icon" @click="removeProduct(product.id)">
-            <Trash2 class="h-4 w-4 text-destructive" />
-          </Button>
+          <span v-if="product.price" class="text-sm text-muted-foreground shrink-0">
+            {{ Number(product.price).toLocaleString() }} ₽
+          </span>
+          <button
+            type="button"
+            class="shrink-0 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all"
+            @click="remove(product.id)"
+          >
+            <X class="h-4 w-4" />
+          </button>
         </div>
       </div>
-    </div>
 
-    <div v-else class="text-sm text-muted-foreground text-center py-8 border rounded-lg">
-      No related products selected. Use search above to add products.
-    </div>
+      <div v-else class="text-sm text-muted-foreground text-center py-6 border rounded-md">
+        Нет связанных товаров для этого варианта
+      </div>
+
+      <Button type="button" size="sm" class="gap-1.5" :disabled="saving" @click="save">
+        <Loader2 v-if="saving" class="h-3.5 w-3.5 animate-spin" />
+        <Save v-else class="h-3.5 w-3.5" />
+        Сохранить
+      </Button>
+    </template>
   </div>
 </template>

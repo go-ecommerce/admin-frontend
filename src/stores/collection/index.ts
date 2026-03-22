@@ -7,6 +7,7 @@ import CollectionService from '@/services/CollectionService'
 import type { ICollectionRequest, ICollectionResponse } from '@/utils/types/api/apiGo.ts'
 import type {
   CollectionResponse,
+  CollectionWithProductResponse,
   CreateCollectionRequest,
   UpdateCollectionRequest,
 } from '@/utils/types/api/generatedApiGo'
@@ -15,6 +16,7 @@ export const useCollectionStore = defineStore('collection', () => {
   const isLoading = ref<boolean>(true)
   const collections = ref<ICollectionResponse | null>(null)
   const currentCollection = ref<CollectionResponse | null>(null)
+  const currentCollectionWithProducts = ref<CollectionWithProductResponse | null>(null)
   const { toast } = useToast()
 
   const getCollections = async (payload: ICollectionRequest): Promise<void> => {
@@ -40,6 +42,23 @@ export const useCollectionStore = defineStore('collection', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching collection ',
+        description: error.message || 'An error occurred while fetching collection',
+        variant: 'destructive',
+      })
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const getCollectionWithProducts = async (id: string): Promise<void> => {
+    try {
+      isLoading.value = true
+      currentCollectionWithProducts.value =
+        await CollectionService.getApiCollectionWithProducts(id)
+    } catch (error: any) {
+      toast({
+        title: 'Error fetching collection',
         description: error.message || 'An error occurred while fetching collection',
         variant: 'destructive',
       })
@@ -96,9 +115,11 @@ export const useCollectionStore = defineStore('collection', () => {
     isLoading,
     collections,
     currentCollection,
+    currentCollectionWithProducts,
     createCollection,
     updateCollection,
     getCollections,
     getCollectionById,
+    getCollectionWithProducts,
   }
 })

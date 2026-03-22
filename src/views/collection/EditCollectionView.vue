@@ -2,7 +2,7 @@
 import { CornerUpLeft, PlusCircle } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import CollectionForm from '@/components/collection/CollectionForm.vue'
@@ -11,63 +11,71 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { useCollectionStore } from '@/stores/collection'
-import type { UpdateCollectionRequest } from '@/utils/types/api/generatedApiGo'
+import type { ShortProduct, UpdateCollectionRequest } from '@/utils/types/api/generatedApiGo'
 
-// Инициализация хранилища, роутера и toast
 const collectionStore = useCollectionStore()
-const { getCollectionById, updateCollection } = collectionStore
-const { currentCollection } = storeToRefs(collectionStore)
+const { getCollectionWithProducts, updateCollection } = collectionStore
+const { currentCollectionWithProducts } = storeToRefs(collectionStore)
 const route = useRoute()
 const router = useRouter()
 const { toast } = useToast()
 
-// Получение UUID из параметров маршрута
 const uuid = typeof route.params.id === 'string' ? route.params.id : ''
 
+const collectionInfo = ref<{ name: string; slug: string; description?: string }>({
+  name: '',
+  slug: '',
+  description: undefined,
+})
+const selectedVariants = ref<ShortProduct[]>([])
+
 onMounted(async () => {
-  if (uuid) {
-    try {
-      await getCollectionById(uuid)
-    } catch (error: any) {
-      toast({
-        title: 'Ошибка загрузки коллекции',
-        description: error.message || 'Не удалось загрузить данные коллекции',
-        variant: 'destructive',
-      })
-    }
-  } else {
+  if (!uuid) {
     toast({
       title: 'Ошибка',
       description: 'Идентификатор коллекции не указан',
       variant: 'destructive',
     })
     await router.push({ name: 'collection' })
-  }
-})
-
-// Обновление категории с загрузкой изображения
-const updateWithUpload = async () => {
-  if (!currentCollection.value?.id) {
-    throw new Error('Collection not selected')
+    return
   }
 
   try {
-    // Подготовка данных для обновления
+    await getCollectionWithProducts(uuid)
+    const c = currentCollectionWithProducts.value
+    if (c) {
+      collectionInfo.value = {
+        name: c.name ?? '',
+        slug: c.slug ?? '',
+        description: c.description,
+      }
+      selectedVariants.value = c.products ?? []
+    }
+  } catch (error: any) {
+    toast({
+      title: 'Ошибка загрузки коллекции',
+      description: error.message || 'Не удалось загрузить данные коллекции',
+      variant: 'destructive',
+    })
+  }
+})
+
+const updateWithUpload = async () => {
+  try {
     const updateRequest: UpdateCollectionRequest = {
-      ...(currentCollection.value as UpdateCollectionRequest),
+      name: collectionInfo.value.name,
+      slug: collectionInfo.value.slug,
+      description: collectionInfo.value.description,
+      variant_ids: selectedVariants.value.map((p) => p.id!).filter(Boolean),
     }
 
-    // Обновление категории
     await updateCollection(updateRequest)
-    toast({
-      title: '✅ Collection updated',
-      variant: 'success',
-    })
+    toast({ title: '✅ Collection updated', variant: 'success' })
     await router.push({ name: 'collection' })
   } catch (error: any) {
     toast({
-      title: 'Ошибка обновления категории',
-      description: error.message || 'Не удалось обновить категорию',
+      title: 'Ошибка обновления коллекции',
+      description: error.message || 'Не удалось обновить коллекцию',
       variant: 'destructive',
     })
   }
@@ -87,7 +95,7 @@ const updateWithUpload = async () => {
           <CornerUpLeft class="h-3.5 w-3.5" />
         </Button>
         <span class="text-2xl font-semibold sr-only sm:not-sr-only sm:whitespace-nowrap">
-          Редактирование категории
+          Редактирование коллекции
         </span>
       </div>
       <Button size="sm" class="h-7 gap-1" @click="updateWithUpload">
@@ -103,17 +111,15 @@ const updateWithUpload = async () => {
           <CardTitle>Info about collection</CardTitle>
         </CardHeader>
         <CardContent>
-          <CollectionForm v-if="currentCollection" v-model="currentCollection" />
+          <CollectionForm v-if="currentCollectionWithProducts" v-model="collectionInfo" />
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Add product collection</CardTitle>
+          <CardTitle>Variants in collection</CardTitle>
         </CardHeader>
         <CardContent>
-          <ProductSearch v-if="currentCollection" v-model="currentCollection.products" />
-
-          <!--<div v-for="row in products" :key="row.id" class=""></div> -->
+          <ProductSearch v-model="selectedVariants" />
         </CardContent>
       </Card>
     </div>

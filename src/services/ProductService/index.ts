@@ -57,11 +57,20 @@ export default class ProductService {
     uuid: string,
     payload: SyncRelatedProductRequest,
   ): Promise<void> {
-    await api.post(`/product/${uuid}/sync-related-products`, payload)
+    await api.post(`/product/variant/${uuid}/sync-related-products`, payload)
   }
 
   public static async getRelatedProducts(uuid: string): Promise<ShortProduct[]> {
-    const { data }: any = await api.get(`/product/id/${uuid}/related-products`)
+    const { data }: any = await api.get(`/product/variant/${uuid}/related-products`)
+    return data
+  }
+
+  public static async getRelatedProductsBatch(
+    variantIds: string[],
+  ): Promise<Record<string, ShortProduct[]>> {
+    const { data }: any = await api.post(`/product/variant/related-products/batch`, {
+      variant_ids: variantIds,
+    })
     return data
   }
 

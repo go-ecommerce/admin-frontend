@@ -2,6 +2,7 @@ import { api } from '@/api/api'
 import type { ICollectionRequest, ICollectionResponse } from '@/utils/types/api/apiGo.ts'
 import type {
   CollectionResponse,
+  CollectionWithProductResponse,
   CreateCollectionRequest,
   UpdateCollectionRequest,
 } from '@/utils/types/api/generatedApiGo'
@@ -14,6 +15,13 @@ export default class CollectionService {
 
   public static async getApiCollectionById(uuid: string): Promise<CollectionResponse> {
     const { data }: any = await api.get(`/collection/id/${uuid}`)
+    return data
+  }
+
+  public static async getApiCollectionWithProducts(
+    uuid: string,
+  ): Promise<CollectionWithProductResponse> {
+    const { data }: any = await api.get(`/collection/id/${uuid}/`)
     return data
   }
 

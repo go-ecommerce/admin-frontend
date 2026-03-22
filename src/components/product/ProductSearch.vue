@@ -1,37 +1,33 @@
 <script setup lang="ts">
 import { watchDebounced } from '@vueuse/core'
-import { ChevronsUpDown } from 'lucide-vue-next'
+import { Loader2, Search } from 'lucide-vue-next'
 
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
-import { Button } from '@/components/ui/button'
-import { Command, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import CommandGroupCustom from '@/components/ui/command/CommandGroupCustom.vue'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import ProductService from '@/services/ProductService'
-import type { ProductResponse } from '@/utils/types/api/generatedApiGo'
+import type { ProductResponse, ShortProduct } from '@/utils/types/api/generatedApiGo'
 
 const props = defineProps<{
-  modelValue?: ProductResponse[]
+  modelValue?: ShortProduct[]
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: ProductResponse): void
-  (e: 'select', product: ProductResponse): void
+  (e: 'update:modelValue', value: ShortProduct[]): void
 }>()
 
-const open = ref(false)
-const value = ref<ProductResponse>()
-
-const selectedProducts = ref<ProductResponse[] | undefined>(props.modelValue)
+const selectedProducts = ref<ShortProduct[]>(props.modelValue ?? [])
 const searchQuery = ref('')
-const products = ref<ProductResponse[]>([])
+const searchResults = ref<ProductResponse[]>([])
 const loading = ref(false)
+const focused = ref(false)
+const showDropdown = computed(() => focused.value && searchQuery.value.trim().length > 0)
 
 watch(
   () => props.modelValue,
   (newValue) => {
-    selectedProducts.value = newValue
+    selectedProducts.value = newValue ?? []
   },
 )
 
@@ -39,18 +35,18 @@ watchDebounced(
   searchQuery,
   async (query) => {
     if (!query.trim()) {
-      products.value = []
+      searchResults.value = []
       return
     }
 
     try {
       loading.value = true
-      products.value = (await ProductService.findProduct(query)).filter(
-        (product) =>
-          !selectedProducts.value?.find((selectedProduct) => selectedProduct.id === product.id),
+      const results = await ProductService.findProduct(query)
+      searchResults.value = results.filter(
+        (product) => !selectedProducts.value.find((s) => s.id === product.id),
       )
     } catch (e) {
-      products.value = []
+      searchResults.value = []
       console.error(e)
     } finally {
       loading.value = false
@@ -59,42 +55,85 @@ watchDebounced(
   { debounce: 300 },
 )
 
-const onProductSelect = (selected: any): void => {
-  emit('select', selected.detail.value)
-  selectedProducts.value = [...(selectedProducts.value ?? []), ...selected.detail.value]
+const addProduct = (product: ProductResponse): void => {
+  const shortProduct: ShortProduct = {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    price: product.price,
+    model: product.model,
+    is_enable: product.is_enable,
+  }
+  const updated = [...selectedProducts.value, shortProduct]
+  selectedProducts.value = updated
+  emit('update:modelValue', updated)
+  searchQuery.value = ''
+  searchResults.value = []
+}
+
+
+const onBlur = (): void => {
+  setTimeout(() => {
+    focused.value = false
+  }, 150)
 }
 </script>
 
 <template>
-  <Popover v-model:open="open">
-    <PopoverTrigger as-child>
-      <Button
-        variant="outline"
-        role="combobox"
-        :aria-expanded="open"
-        class="w-[200px] justify-between"
-      >
-        Select product...
-        <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-      </Button>
-    </PopoverTrigger>
-    <PopoverContent class="w-[200px] p-0">
-      <Command>
-        <CommandInput v-model="searchQuery" placeholder="Search product..." />
+  <div class="space-y-3">
+    <!-- Search input -->
+    <div class="relative">
+      <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Input
+        v-model="searchQuery"
+        placeholder="Поиск варианта по названию..."
+        class="pl-9 pr-9"
+        @focus="focused = true"
+        @blur="onBlur"
+      />
+      <Loader2
+        v-if="loading"
+        class="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground"
+      />
+    </div>
 
-        <CommandList>
-          <CommandGroupCustom>
-            <CommandItem
-              v-for="product in products"
-              :key="product.id"
-              :value="product"
-              @select="onProductSelect($event)"
-            >
-              {{ product.name }}
-            </CommandItem>
-          </CommandGroupCustom>
-        </CommandList>
-      </Command>
-    </PopoverContent>
-  </Popover>
+    <!-- Dropdown results -->
+    <div
+      v-if="showDropdown"
+      class="border rounded-md shadow-md bg-background overflow-hidden"
+    >
+      <!-- Skeleton loading -->
+      <div v-if="loading" class="p-2 space-y-1">
+        <Skeleton v-for="i in 3" :key="i" class="h-10 w-full" />
+      </div>
+
+      <!-- Results -->
+      <template v-else>
+        <div v-if="searchResults.length === 0" class="py-6 text-center text-sm text-muted-foreground">
+          Ничего не найдено
+        </div>
+        <button
+          v-for="product in searchResults"
+          :key="product.id"
+          type="button"
+          class="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors"
+          @mousedown.prevent="addProduct(product)"
+        >
+          <Package class="h-4 w-4 shrink-0 text-muted-foreground" />
+          <div class="flex-1 min-w-0">
+            <div class="font-medium text-sm truncate">
+              {{ product.name || product.model }}
+            </div>
+            <div class="text-xs text-muted-foreground truncate">
+              {{ product.model }}
+            </div>
+          </div>
+          <span v-if="product.price" class="text-sm font-medium shrink-0">
+            {{ product.price.toLocaleString() }} ₽
+          </span>
+        </button>
+      </template>
+    </div>
+
+  </div>
 </template>

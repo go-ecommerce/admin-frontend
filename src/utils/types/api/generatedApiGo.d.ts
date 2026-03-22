@@ -263,8 +263,8 @@ export interface CreateCollectionRequest {
   /** @maxLength 500 */
   description?: string;
   name: string;
-  product_ids?: string[];
   slug: string;
+  variant_ids?: string[];
 }
 
 export interface CreateManufacturerRequest {
@@ -341,6 +341,10 @@ export interface FullPagingData {
 
 export interface GeoResponse {
   city?: string;
+}
+
+export interface GetRelatedProductsBatchRequest {
+  variant_ids?: string[];
 }
 
 export interface JSONResponseAttributeGroupResponse {
@@ -544,6 +548,12 @@ export interface JSONResponseArrayGithubComStickproGoStoreInternalModelsCity {
 export interface JSONResponseArrayGithubComStickproGoStoreInternalModelsProduct {
   code?: number;
   data?: GithubComStickproGoStoreInternalModelsProduct[];
+  message?: string;
+}
+
+export interface JSONResponseMapStringArrayShortProduct {
+  code?: number;
+  data?: MapStringArrayShortProduct;
   message?: string;
 }
 
@@ -772,8 +782,8 @@ export interface UpdateCollectionRequest {
   /** @maxLength 500 */
   description?: string;
   name: string;
-  product_ids?: string[];
   slug: string;
+  variant_ids?: string[];
 }
 
 export interface UpdateManufacturerRequest {
@@ -1013,6 +1023,8 @@ export interface GithubComStickproGoStoreInternalStorageRepositoryRepositoryProd
   weight?: number;
   width?: number;
 }
+
+export type MapStringArrayShortProduct = Record<string, ShortProduct[]>;
 
 export interface PgtypeBool {
   bool?: boolean;

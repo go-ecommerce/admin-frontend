@@ -8,7 +8,6 @@ import { useRoute, useRouter } from 'vue-router'
 import ProductIdentifierForm from '@/components/product/ProductIdentifierForm.vue'
 import ProductPhysicalAttribute from '@/components/product/ProductPhysicalAttribute.vue'
 import ProductStockForm from '@/components/product/ProductStockForm.vue'
-import RelatedProductsForm from '@/components/product/RelatedProductsForm.vue'
 import ProductAttributesForm from '@/components/product/ProductAttributesForm.vue'
 import ProductVariantsForm from '@/components/product/ProductVariantsForm.vue'
 import { Button } from '@/components/ui/button'
@@ -71,7 +70,7 @@ const productStore = useProductStore()
 const {
   getProductsWithMedium,
   updateProduct,
-  getRelatedProducts,
+
   syncRelatedProducts,
   getProductAttributes,
   syncProductAttributes,
@@ -220,7 +219,7 @@ onMounted(async () => {
   if (uuid) {
     try {
       await getProductsWithMedium(uuid)
-      await getRelatedProducts(uuid)
+
       await getProductAttributes(uuid)
       await getProductVariants(uuid)
 
@@ -311,10 +310,9 @@ onMounted(async () => {
   </div>
   <main class="p-4 sm:px-6 sm:py-0 md:gap-8" v-if="currentProduct">
     <Tabs default-value="general" class="w-full">
-      <TabsList class="grid w-full grid-cols-4">
+      <TabsList class="grid w-full grid-cols-3">
         <TabsTrigger value="general">General Info</TabsTrigger>
         <TabsTrigger value="variants">Variants</TabsTrigger>
-        <TabsTrigger value="related">Related Products</TabsTrigger>
         <TabsTrigger value="attributes">Attributes</TabsTrigger>
       </TabsList>
 
@@ -437,17 +435,6 @@ onMounted(async () => {
               @update="(variantId, payload) => updateProductVariant(uuid, variantId, payload)"
               @delete="(variantId) => deleteProductVariant(uuid, variantId)"
             />
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="related" class="space-y-6 mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Related Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RelatedProductsForm v-model="currentRelatedProducts" />
           </CardContent>
         </Card>
       </TabsContent>

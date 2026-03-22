@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { Pencil, Plus, Sparkles, Trash2, X, Check } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { Pencil, Plus, Sparkles, Trash2, X, Check, Package } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { useToast } from '@/components/ui/toast/use-toast'
+import ProductSearch from '@/components/product/ProductSearch.vue'
+import ProductService from '@/services/ProductService'
 import { generateSlug as generateSlugUtil } from '@/utils/slug'
 import type {
   CreateProductVariantRequest,
   ProductVariantResponse,
+  ShortProduct,
   UpdateProductVariantRequest,
 } from '@/utils/types/api/generatedApiGo'
 
@@ -24,6 +28,8 @@ const emit = defineEmits<{
   update: [variantId: string, payload: UpdateProductVariantRequest]
   delete: [variantId: string]
 }>()
+
+const { toast } = useToast()
 
 interface VariantFormState {
   name: string
@@ -57,6 +63,26 @@ const addForm = ref<VariantFormState>(emptyForm())
 const editForms = ref<Record<string, VariantFormState>>({})
 const showMetaAdd = ref(false)
 const showMetaEdit = ref<Record<string, boolean>>({})
+const showRelatedEdit = ref<Record<string, boolean>>({})
+const relatedMap = ref<Record<string, ShortProduct[]>>({})
+onMounted(async () => {
+  const ids = props.variants.map((v) => v.id!).filter(Boolean)
+  if (!ids.length) return
+  try {
+    relatedMap.value = await ProductService.getRelatedProductsBatch(ids)
+  } catch {
+    relatedMap.value = {}
+  }
+})
+
+const saveRelated = async (variantId: string) => {
+  try {
+    const ids = (relatedMap.value[variantId] ?? []).map((p) => p.id!).filter(Boolean)
+    await ProductService.syncRelatedProducts(variantId, { variant_ids: ids })
+  } catch {
+    toast({ title: 'Ошибка сохранения связанных товаров', variant: 'destructive' })
+  }
+}
 
 const startEdit = (variant: ProductVariantResponse) => {
   editingVariantId.value = variant.id!
@@ -73,13 +99,14 @@ const startEdit = (variant: ProductVariantResponse) => {
     is_enable: variant.is_enable ?? true,
   }
   showMetaEdit.value[variant.id!] = false
+  showRelatedEdit.value[variant.id!] = false
 }
 
 const cancelEdit = () => {
   editingVariantId.value = null
 }
 
-const saveEdit = (variantId: string) => {
+const saveEdit = async (variantId: string) => {
   const form = editForms.value[variantId]
   emit('update', variantId, {
     id: variantId,
@@ -94,6 +121,7 @@ const saveEdit = (variantId: string) => {
     sort_order: form.sort_order,
     is_enable: form.is_enable,
   })
+  await saveRelated(variantId)
   editingVariantId.value = null
 }
 
@@ -159,11 +187,13 @@ const cancelAdd = () => {
       <div v-else class="p-4 space-y-4 bg-muted/30">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="space-y-1.5">
-            <Label>Название</Label>
+            <div class="flex items-center h-6">
+              <Label>Название</Label>
+            </div>
             <Input v-model="editForms[variant.id!].name" placeholder="Название варианта" />
           </div>
           <div class="space-y-1.5">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between h-6">
               <Label>Slug</Label>
               <Button
                 type="button"
@@ -193,7 +223,7 @@ const cancelAdd = () => {
           </div>
         </div>
 
-        <!-- Meta toggle -->
+        <!-- SEO toggle -->
         <button
           type="button"
           class="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
@@ -220,6 +250,50 @@ const cancelAdd = () => {
           </div>
         </div>
 
+        <!-- Related products toggle -->
+        <button
+          type="button"
+          class="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+          @click="showRelatedEdit[variant.id!] = !showRelatedEdit[variant.id!]"
+        >
+          {{ showRelatedEdit[variant.id!] ? '▾' : '▸' }} Связанные товары
+          <span v-if="relatedMap[variant.id!]?.length" class="ml-1 text-xs bg-muted px-1.5 py-0.5 rounded-full">
+            {{ relatedMap[variant.id!].length }}
+          </span>
+        </button>
+        <div v-if="showRelatedEdit[variant.id!]" class="space-y-3">
+          <ProductSearch
+            :model-value="relatedMap[variant.id!] ?? []"
+            @update:model-value="relatedMap[variant.id!] = $event"
+          />
+          <div v-if="relatedMap[variant.id!]?.length" class="border rounded-md divide-y">
+            <div
+              v-for="product in relatedMap[variant.id!]"
+              :key="product.id"
+              class="flex items-center gap-3 px-3 py-2 group"
+            >
+              <Package class="h-4 w-4 shrink-0 text-muted-foreground" />
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium truncate">{{ product.name }}</div>
+                <div class="text-xs text-muted-foreground truncate">{{ product.model }}</div>
+              </div>
+              <span v-if="product.price" class="text-sm text-muted-foreground shrink-0">
+                {{ Number(product.price).toLocaleString() }} ₽
+              </span>
+              <button
+                type="button"
+                class="shrink-0 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all"
+                @click="relatedMap[variant.id!] = relatedMap[variant.id!].filter(p => p.id !== product.id)"
+              >
+                <X class="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div v-else class="text-sm text-muted-foreground text-center py-4 border rounded-md">
+            Нет связанных товаров
+          </div>
+        </div>
+
         <div class="flex justify-end gap-2">
           <Button variant="outline" size="sm" @click="cancelEdit">
             <X class="h-4 w-4 mr-1" />
@@ -238,11 +312,13 @@ const cancelAdd = () => {
       <div class="font-medium">Новый вариант</div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="space-y-1.5">
-          <Label>Название</Label>
+          <div class="flex items-center h-6">
+            <Label>Название</Label>
+          </div>
           <Input v-model="addForm.name" placeholder="Название варианта" />
         </div>
         <div class="space-y-1.5">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between h-6">
             <Label>Slug</Label>
             <Button
               type="button"

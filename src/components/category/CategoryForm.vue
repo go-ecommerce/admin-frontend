@@ -63,13 +63,13 @@ const generateSlug = (): void => {
             <span>Generate</span>
           </Button>
         </div>
-        <div class="relative w-full items-center">
-          <Input id="slug" v-model="categorySlug" type="text" placeholder="slug" class="pl-60" />
+        <div class="flex w-full">
           <span
-            class="absolute bg-accent rounded-l-md start-0 inset-y-0 flex items-center justify-center px-2"
+            class="bg-accent border border-input rounded-l-md flex items-center px-3 text-sm text-muted-foreground whitespace-nowrap"
           >
             {{ appFrontend }}{{ frontendCategoryUrl }}
           </span>
+          <Input id="slug" v-model="categorySlug" type="text" placeholder="slug" class="rounded-l-none" />
         </div>
       </div>
       <div class="flex flex-col space-y-1.5">
