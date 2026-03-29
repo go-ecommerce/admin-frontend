@@ -21,6 +21,15 @@ const collectionName = ref<string>(props.modelValue.name || '')
 const collectionSlug = ref<string>(props.modelValue.slug || '')
 const collectionDescription = ref<string>(props.modelValue.description || '')
 
+watch(
+  () => props.modelValue,
+  (val) => {
+    collectionName.value = val.name || ''
+    collectionSlug.value = val.slug || ''
+    collectionDescription.value = val.description || ''
+  },
+)
+
 // Обновляем modelValue при изменении полей
 watch([collectionName, collectionSlug, collectionDescription], () => {
   emit('update:modelValue', {

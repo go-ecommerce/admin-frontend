@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { watchDebounced } from '@vueuse/core'
-import { Loader2, Search } from 'lucide-vue-next'
+import { Loader2, Plus, Search } from 'lucide-vue-next'
 
 import { computed, ref, watch } from 'vue'
 
@@ -80,13 +80,13 @@ const onBlur = (): void => {
 </script>
 
 <template>
-  <div class="space-y-3">
+  <div class="relative">
     <!-- Search input -->
     <div class="relative">
       <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
         v-model="searchQuery"
-        placeholder="Поиск варианта по названию..."
+        placeholder="Поиск по названию..."
         class="pl-9 pr-9"
         @focus="focused = true"
         @blur="onBlur"
@@ -100,7 +100,7 @@ const onBlur = (): void => {
     <!-- Dropdown results -->
     <div
       v-if="showDropdown"
-      class="border rounded-md shadow-md bg-background overflow-hidden"
+      class="absolute top-full left-0 right-0 mt-1 z-50 border rounded-md shadow-lg bg-background overflow-hidden"
     >
       <!-- Skeleton loading -->
       <div v-if="loading" class="p-2 space-y-1">
@@ -109,31 +109,26 @@ const onBlur = (): void => {
 
       <!-- Results -->
       <template v-else>
-        <div v-if="searchResults.length === 0" class="py-6 text-center text-sm text-muted-foreground">
+        <div v-if="searchResults.length === 0" class="py-5 text-center text-sm text-muted-foreground">
           Ничего не найдено
         </div>
         <button
           v-for="product in searchResults"
           :key="product.id"
           type="button"
-          class="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent transition-colors"
+          class="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-accent transition-colors group/item"
           @mousedown.prevent="addProduct(product)"
         >
-          <Package class="h-4 w-4 shrink-0 text-muted-foreground" />
           <div class="flex-1 min-w-0">
-            <div class="font-medium text-sm truncate">
-              {{ product.name || product.model }}
-            </div>
-            <div class="text-xs text-muted-foreground truncate">
-              {{ product.model }}
-            </div>
+            <div class="font-medium text-sm truncate">{{ product.name || product.model }}</div>
+            <div class="text-xs text-muted-foreground truncate">{{ product.model }}</div>
           </div>
-          <span v-if="product.price" class="text-sm font-medium shrink-0">
-            {{ product.price.toLocaleString() }} ₽
+          <span v-if="product.price" class="text-sm text-muted-foreground shrink-0">
+            {{ Number(product.price).toLocaleString() }} ₽
           </span>
+          <Plus class="h-4 w-4 shrink-0 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
         </button>
       </template>
     </div>
-
   </div>
 </template>

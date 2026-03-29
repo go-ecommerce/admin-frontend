@@ -89,13 +89,14 @@ export const useCollectionStore = defineStore('collection', () => {
   }
 
   const updateCollection = async (request: UpdateCollectionRequest): Promise<void> => {
-    if (!currentCollection.value?.id) {
+    const id = currentCollection.value?.id ?? currentCollectionWithProducts.value?.id
+    if (!id) {
       throw new Error('No collection selected for update')
     }
 
     try {
       isLoading.value = true
-      await CollectionService.UpdateApiCollection(currentCollection.value.id, request)
+      await CollectionService.UpdateApiCollection(id, request)
       toast({
         title: '✅ Success update',
         variant: 'success',

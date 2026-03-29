@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CornerUpLeft, PlusCircle } from 'lucide-vue-next'
+import { CornerUpLeft, Package, PlusCircle, X } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 
 import { onMounted, ref } from 'vue'
@@ -118,8 +118,37 @@ const updateWithUpload = async () => {
         <CardHeader>
           <CardTitle>Variants in collection</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ProductSearch v-model="selectedVariants" />
+        <CardContent class="space-y-3">
+          <ProductSearch
+            :model-value="selectedVariants"
+            @update:model-value="selectedVariants = $event"
+          />
+          <div v-if="selectedVariants.length" class="border rounded-md divide-y">
+            <div
+              v-for="product in selectedVariants"
+              :key="product.id"
+              class="flex items-center gap-3 px-3 py-2 group"
+            >
+              <Package class="h-4 w-4 shrink-0 text-muted-foreground" />
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium truncate">{{ product.name }}</div>
+                <div class="text-xs text-muted-foreground truncate">{{ product.model }}</div>
+              </div>
+              <span v-if="product.price" class="text-sm text-muted-foreground shrink-0">
+                {{ Number(product.price).toLocaleString() }} ₽
+              </span>
+              <button
+                type="button"
+                class="shrink-0 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all"
+                @click="selectedVariants = selectedVariants.filter(p => p.id !== product.id)"
+              >
+                <X class="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div v-else class="text-sm text-muted-foreground text-center py-6 border rounded-md">
+            Нет вариантов в коллекции
+          </div>
         </CardContent>
       </Card>
     </div>
