@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CornerUpLeft, PlusCircle, Trash2 } from 'lucide-vue-next'
+import { CornerUpLeft, PlusCircle } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 
 import { onMounted, ref } from 'vue'
@@ -26,12 +26,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/toast/use-toast'
 import MediaService from '@/services/MediaService'
 import { useProductStore } from '@/stores/product'
-import { Input } from '@/components/ui/input'
 import type { MediumResponse } from '@/utils/types/api/generatedApiGo'
 
 interface EditFormState {
-  // Root fields
-  model: string
   sku: string
   upc: string
   ean: string
@@ -40,7 +37,9 @@ interface EditFormState {
   mpn: string
   location: string
   manufacturer_id: string | undefined
-  price: number
+  price_retail: number
+  price_business: number
+  price_wholesale: number
   weight: number
   length: number
   width: number
@@ -51,15 +50,6 @@ interface EditFormState {
   minimum: number
   sort_order: number
   is_enable: boolean
-  // Variant fields (flat for UI)
-  name: string
-  slug: string
-  description: string
-  meta_title: string
-  meta_h1: string
-  meta_description: string
-  meta_keyword: string
-  category_id: string | undefined
 }
 
 const router = useRouter()
@@ -70,8 +60,6 @@ const productStore = useProductStore()
 const {
   getProductsWithMedium,
   updateProduct,
-
-  syncRelatedProducts,
   getProductAttributes,
   syncProductAttributes,
   getProductVariants,
@@ -82,7 +70,6 @@ const {
 const {
   currentProduct,
   currentProductMedium,
-  currentRelatedProducts,
   currentProductAttributes,
   currentProductVariants,
 } = storeToRefs(productStore)
@@ -96,7 +83,6 @@ const handleAttributesUpdate = (valueIds: string[]) => {
 }
 
 const editInfo = ref<EditFormState>({
-  model: '',
   sku: '',
   upc: '',
   ean: '',
@@ -105,7 +91,9 @@ const editInfo = ref<EditFormState>({
   mpn: '',
   location: '',
   manufacturer_id: undefined,
-  price: 0,
+  price_retail: 0,
+  price_business: 0,
+  price_wholesale: 0,
   weight: 0,
   length: 0,
   width: 0,
@@ -116,14 +104,6 @@ const editInfo = ref<EditFormState>({
   minimum: 1,
   sort_order: 0,
   is_enable: true,
-  name: '',
-  slug: '',
-  description: '',
-  meta_title: '',
-  meta_h1: '',
-  meta_description: '',
-  meta_keyword: '',
-  category_id: undefined,
 })
 
 const files = ref([])
@@ -149,11 +129,7 @@ const updateAll = async () => {
       .map((file) => file.id)
       .filter((id): id is string => typeof id === 'string')
 
-    const allMediaFiles = [...currentProductMedium.value, ...uploadedFiles]
-    const firstImagePath = allMediaFiles[0]?.path
-
     await updateProduct({
-      model: editInfo.value.model,
       sku: editInfo.value.sku,
       upc: editInfo.value.upc,
       ean: editInfo.value.ean,
@@ -161,7 +137,9 @@ const updateAll = async () => {
       isbn: editInfo.value.isbn,
       mpn: editInfo.value.mpn,
       location: editInfo.value.location,
-      price: editInfo.value.price,
+      price_retail: editInfo.value.price_retail,
+      price_business: editInfo.value.price_business,
+      price_wholesale: editInfo.value.price_wholesale,
       weight: editInfo.value.weight,
       length: editInfo.value.length,
       width: editInfo.value.width,
@@ -173,28 +151,7 @@ const updateAll = async () => {
       sort_order: editInfo.value.sort_order,
       is_enable: editInfo.value.is_enable,
       media_ids: [...existingMediaIds, ...newMediaIds],
-      variant: {
-        id: currentProduct.value?.variant?.id || '',
-        name: editInfo.value.name,
-        slug: editInfo.value.slug,
-        description: editInfo.value.description,
-        meta_title: editInfo.value.meta_title,
-        meta_h1: editInfo.value.meta_h1,
-        meta_description: editInfo.value.meta_description,
-        meta_keyword: editInfo.value.meta_keyword,
-        category_id: editInfo.value.category_id,
-        image: firstImagePath,
-        is_enable: editInfo.value.is_enable,
-        sort_order: editInfo.value.sort_order,
-      },
     })
-
-    if (uuid && currentRelatedProducts.value.length >= 0) {
-      const productIds = currentRelatedProducts.value
-        .map((p) => p.id)
-        .filter((id): id is string => typeof id === 'string')
-      await syncRelatedProducts(uuid, productIds)
-    }
 
     if (uuid && attributesWereModified.value) {
       await syncProductAttributes(uuid, selectedAttributeValueIds.value)
@@ -226,7 +183,6 @@ onMounted(async () => {
       const p = currentProduct.value
       if (p) {
         editInfo.value = {
-          model: p.model || '',
           sku: p.sku || '',
           upc: p.upc || '',
           ean: p.ean || '',
@@ -235,7 +191,9 @@ onMounted(async () => {
           mpn: p.mpn || '',
           location: p.location || '',
           manufacturer_id: p.manufacturer_id?.uuid,
-          price: p.price || 0,
+          price_retail: p.price_retail || 0,
+          price_business: p.price_business || 0,
+          price_wholesale: p.price_wholesale || 0,
           weight: p.weight || 0,
           length: p.length || 0,
           width: p.width || 0,
@@ -246,14 +204,6 @@ onMounted(async () => {
           minimum: p.minimum || 1,
           sort_order: p.sort_order || 0,
           is_enable: p.is_enable ?? true,
-          name: p.variant?.name || '',
-          slug: p.variant?.slug || '',
-          description: p.variant?.description || '',
-          meta_title: p.variant?.meta_title || '',
-          meta_h1: p.variant?.meta_h1 || '',
-          meta_description: p.variant?.meta_description || '',
-          meta_keyword: p.variant?.meta_keyword || '',
-          category_id: p.variant?.category_id?.uuid,
         }
       }
 
@@ -299,7 +249,7 @@ onMounted(async () => {
         </Button>
         <div class="text-2xl sr-only sm:not-sr-only sm:whitespace-nowrap">
           Редактирование Товара
-          <span class="text-3xl font-semibold">{{ editInfo.model }}</span>
+          <span class="text-3xl font-semibold">{{ currentProduct?.variant?.name }}</span>
         </div>
       </div>
       <Button size="sm" class="h-7 gap-1" @click="updateAll()">
@@ -319,17 +269,6 @@ onMounted(async () => {
       <TabsContent value="general" class="space-y-6 mt-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div class="col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Product info</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div class="flex flex-col space-y-1.5">
-                  <Label for="model">Model</Label>
-                  <Input id="model" v-model="editInfo.model" placeholder="Model of your product" />
-                </div>
-              </CardContent>
-            </Card>
             <Card>
               <CardHeader>
                 <CardTitle>Identifier</CardTitle>
@@ -389,8 +328,24 @@ onMounted(async () => {
                 <CardTitle>Price</CardTitle>
               </CardHeader>
               <CardContent>
-                <NumberField v-model="editInfo.price">
-                  <Label>Price</Label>
+                <NumberField v-model="editInfo.price_retail" class="mb-4">
+                  <Label>Retail Price</Label>
+                  <NumberFieldContent>
+                    <NumberFieldDecrement />
+                    <NumberFieldInput />
+                    <NumberFieldIncrement />
+                  </NumberFieldContent>
+                </NumberField>
+                <NumberField v-model="editInfo.price_wholesale" class="mb-4">
+                  <Label>Wholesale Price</Label>
+                  <NumberFieldContent>
+                    <NumberFieldDecrement />
+                    <NumberFieldInput />
+                    <NumberFieldIncrement />
+                  </NumberFieldContent>
+                </NumberField>
+                <NumberField v-model="editInfo.price_business">
+                  <Label>Business Price</Label>
                   <NumberFieldContent>
                     <NumberFieldDecrement />
                     <NumberFieldInput />

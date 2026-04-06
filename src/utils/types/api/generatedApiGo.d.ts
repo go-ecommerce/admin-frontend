@@ -33,6 +33,13 @@ export interface APIErrors {
   errors?: APIError[];
 }
 
+export interface AddCartItemRequest {
+  product_id: string;
+  /** @min 1 */
+  quantity: number;
+  variant_id: string;
+}
+
 export interface AttributeGroupResponse {
   created_at?: string;
   description?: string;
@@ -113,6 +120,23 @@ export interface BreadcrumbDTO {
   slug?: string;
 }
 
+export interface CartItemResponse {
+  available?: boolean;
+  image_url?: string;
+  max_quantity?: number;
+  name?: string;
+  price?: number;
+  product_id?: string;
+  quantity?: number;
+  slug?: string;
+  variant_id?: string;
+}
+
+export interface CartResponse {
+  items?: CartItemResponse[];
+  total_price?: number;
+}
+
 export interface CategoryResponse {
   created_at?: string;
   description?: string;
@@ -178,7 +202,7 @@ export interface CollectionWithProductResponse {
   description?: string;
   id?: string;
   name?: string;
-  products?: ShortProduct[];
+  products?: ShortProductResponse[];
   slug?: string;
   updated_at?: string;
 }
@@ -296,6 +320,7 @@ export interface CreateManufacturerRequest {
 export interface CreateProductRequest {
   ean?: string;
   height?: number;
+  image?: string;
   is_enable?: boolean;
   isbn?: string;
   jan?: string;
@@ -304,16 +329,16 @@ export interface CreateProductRequest {
   manufacturer_id?: string;
   media_ids?: string[];
   minimum: number;
-  model: string;
   mpn?: string;
-  price: number;
+  price_business?: number;
+  price_retail?: number;
+  price_wholesale?: number;
   quantity?: number;
   sku?: string;
   sort_order?: number;
   stock_status?: string;
   subtract?: boolean;
   upc?: string;
-  variant: CreateProductVariantRequest;
   weight?: number;
   width?: number;
 }
@@ -321,12 +346,12 @@ export interface CreateProductRequest {
 export interface CreateProductVariantRequest {
   category_id?: string;
   description?: string;
-  image?: string;
   is_enable?: boolean;
   meta_description?: string;
   meta_h1?: string;
   meta_keyword?: string;
   meta_title?: string;
+  model: string;
   name: string;
   slug: string;
   sort_order?: number;
@@ -374,6 +399,12 @@ export interface JSONResponseAttributeValueResponse {
 export interface JSONResponseAuthResponse {
   code?: number;
   data?: AuthResponse;
+  message?: string;
+}
+
+export interface JSONResponseCartResponse {
+  code?: number;
+  data?: CartResponse;
   message?: string;
 }
 
@@ -491,6 +522,18 @@ export interface JSONResponseUserInfoResponse {
   message?: string;
 }
 
+export interface JSONResponseViewedResponse {
+  code?: number;
+  data?: ViewedResponse;
+  message?: string;
+}
+
+export interface JSONResponseAny {
+  code?: number;
+  data?: any;
+  message?: string;
+}
+
 export interface JSONResponseArrayAttributeGroupResponse {
   code?: number;
   data?: AttributeGroupResponse[];
@@ -530,6 +573,12 @@ export interface JSONResponseArrayProductVariantResponse {
 export interface JSONResponseArrayShortProduct {
   code?: number;
   data?: ShortProduct[];
+  message?: string;
+}
+
+export interface JSONResponseArrayVariantCategoryResponse {
+  code?: number;
+  data?: VariantCategoryResponse[];
   message?: string;
 }
 
@@ -593,6 +642,7 @@ export interface ProductResponse {
   ean?: string;
   height?: number;
   id?: string;
+  image?: string;
   is_enable?: boolean;
   isbn?: string;
   jan?: string;
@@ -600,9 +650,10 @@ export interface ProductResponse {
   location?: string;
   manufacturer_id?: UuidNullUUID;
   minimum?: number;
-  model?: string;
   mpn?: string;
-  price?: number;
+  price_business?: number;
+  price_retail?: number;
+  price_wholesale?: number;
   quantity?: number;
   sku?: string;
   sort_order?: number;
@@ -630,12 +681,12 @@ export interface ProductVariantListItem {
   created_at?: PgtypeTimestamp;
   description?: PgtypeText;
   id?: string;
-  image?: PgtypeText;
   is_enable?: boolean;
   meta_description?: PgtypeText;
   meta_h1?: PgtypeText;
   meta_keyword?: PgtypeText;
   meta_title?: PgtypeText;
+  model?: string;
   name?: string;
   product_id?: string;
   slug?: string;
@@ -648,12 +699,12 @@ export interface ProductVariantResponse {
   category_id?: UuidNullUUID;
   description?: string;
   id?: string;
-  image?: string;
   is_enable?: boolean;
   meta_description?: string;
   meta_h1?: string;
   meta_keyword?: string;
   meta_title?: string;
+  model?: string;
   name?: string;
   slug?: string;
   sort_order?: number;
@@ -720,11 +771,31 @@ export interface ShortProduct {
   model?: string;
   name?: string;
   price?: number;
+  product_id?: string;
+  slug?: string;
+}
+
+export interface ShortProductResponse {
+  id?: string;
+  image?: PgtypeText;
+  is_enable?: boolean;
+  model?: string;
+  name?: string;
+  price?: number;
+  product_id?: string;
   slug?: string;
 }
 
 export interface SyncRelatedProductRequest {
   variant_ids?: string[];
+}
+
+export interface SyncVariantCategoriesRequest {
+  category_ids?: string[];
+}
+
+export interface TrackViewedRequest {
+  variant_id: string;
 }
 
 export interface UpdateAttributeGroupRequest {
@@ -749,6 +820,10 @@ export interface UpdateAttributeValueRequest {
   /** @maxLength 255 */
   value_normalized?: string;
   value_numeric?: number;
+}
+
+export interface UpdateCartItemRequest {
+  quantity?: number;
 }
 
 export interface UpdateCategoryRequest {
@@ -825,14 +900,15 @@ export interface UpdateProductRequest {
   minimum?: number;
   model?: string;
   mpn?: string;
-  price?: number;
+  price_business?: number;
+  price_retail?: number;
+  price_wholesale?: number;
   quantity?: number;
   sku?: string;
   sort_order?: number;
   stock_status?: string;
   subtract?: boolean;
   upc?: string;
-  variant: UpdateProductVariantRequest;
   weight?: number;
   width?: number;
 }
@@ -847,6 +923,7 @@ export interface UpdateProductVariantRequest {
   meta_h1?: string;
   meta_keyword?: string;
   meta_title?: string;
+  model: string;
   name?: string;
   slug?: string;
   sort_order?: number;
@@ -866,6 +943,26 @@ export interface UserInfoResponse {
   location: string;
   /** @format date-time */
   updated_at?: string;
+}
+
+export interface VariantCategoryResponse {
+  category_id?: string;
+  category_is_enable?: boolean;
+  category_name?: string;
+  category_slug?: string;
+}
+
+export interface ViewedItemResponse {
+  image_url?: string;
+  name?: string;
+  price?: number;
+  product_id?: string;
+  slug?: string;
+  variant_id?: string;
+}
+
+export interface ViewedResponse {
+  items?: ViewedItemResponse[];
 }
 
 export interface DecimalNullDecimal {
@@ -976,6 +1073,7 @@ export interface GithubComStickproGoStoreInternalModelsProduct {
   external_id?: PgtypeText;
   height?: number;
   id?: string;
+  image?: PgtypeText;
   is_enable?: boolean;
   isbn?: PgtypeText;
   jan?: PgtypeText;
@@ -983,9 +1081,10 @@ export interface GithubComStickproGoStoreInternalModelsProduct {
   location?: PgtypeText;
   manufacturer_id?: UuidNullUUID;
   minimum?: number;
-  model?: string;
   mpn?: PgtypeText;
-  price?: number;
+  price_business?: number;
+  price_retail?: number;
+  price_wholesale?: number;
   quantity?: number;
   sku?: PgtypeText;
   sort_order?: number;
@@ -1003,6 +1102,7 @@ export interface GithubComStickproGoStoreInternalStorageRepositoryRepositoryProd
   external_id?: PgtypeText;
   height?: number;
   id?: string;
+  image?: PgtypeText;
   is_enable?: boolean;
   isbn?: PgtypeText;
   jan?: PgtypeText;
@@ -1010,9 +1110,10 @@ export interface GithubComStickproGoStoreInternalStorageRepositoryRepositoryProd
   location?: PgtypeText;
   manufacturer_id?: UuidNullUUID;
   minimum?: number;
-  model?: string;
   mpn?: PgtypeText;
-  price?: number;
+  price_business?: number;
+  price_retail?: number;
+  price_wholesale?: number;
   quantity?: number;
   sku?: PgtypeText;
   sort_order?: number;

@@ -19,7 +19,6 @@ const emit = defineEmits(['update:modelValue'])
 
 const productName = ref('')
 const productSlug = ref('')
-const productModel = ref('')
 const productDescription = ref('')
 
 watch(
@@ -27,18 +26,16 @@ watch(
   (newValue) => {
     productName.value = newValue.name || ''
     productSlug.value = newValue.slug || ''
-    productModel.value = newValue.model || ''
     productDescription.value = newValue.description || ''
   },
   { immediate: true },
 )
 
-watch([productName, productSlug, productModel, productDescription], () => {
+watch([productName, productSlug, productDescription], () => {
   emit('update:modelValue', {
     ...props.modelValue,
     name: productName.value,
     slug: productSlug.value,
-    model: productModel.value,
     description: productDescription.value,
   })
 })
@@ -78,10 +75,6 @@ const generateSlug = (): void => {
           </span>
           <Input id="slug" v-model="productSlug" type="text" placeholder="slug" class="rounded-l-none" />
         </div>
-      </div>
-      <div class="flex flex-col space-y-1.5">
-        <Label for="model">Model</Label>
-        <Input id="model" v-model="productModel" placeholder="Model of your product" />
       </div>
       <div class="flex flex-col space-y-1.5">
         <Label for="description">Description</Label>

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { useCollectionStore } from '@/stores/collection'
-import type { ShortProduct, UpdateCollectionRequest } from '@/utils/types/api/generatedApiGo'
+import type { ShortProductResponse, UpdateCollectionRequest } from '@/utils/types/api/generatedApiGo'
 
 const collectionStore = useCollectionStore()
 const { getCollectionWithProducts, updateCollection } = collectionStore
@@ -27,7 +27,7 @@ const collectionInfo = ref<{ name: string; slug: string; description?: string }>
   slug: '',
   description: undefined,
 })
-const selectedVariants = ref<ShortProduct[]>([])
+const selectedVariants = ref<ShortProductResponse[]>([])
 
 onMounted(async () => {
   if (!uuid) {

@@ -41,19 +41,14 @@ const columns: ColumnDef<any>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'model',
-    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Model' }),
-    cell: ({ row }) => h('div', { class: 'font-medium' }, row.getValue('model') ?? '—'),
-  },
-  {
     accessorKey: 'sku',
     header: ({ column }) => h(DataTableColumnHeader, { column, title: 'SKU' }),
     cell: ({ row }) => h('div', { class: 'text-sm text-muted-foreground' }, row.getValue('sku') ?? '—'),
   },
   {
-    accessorKey: 'price',
+    accessorKey: 'price_retail',
     header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Price' }),
-    cell: ({ row }) => h('div', {}, row.getValue('price') ?? '—'),
+    cell: ({ row }) => h('div', {}, row.getValue('price_retail') ?? '—'),
   },
   {
     accessorKey: 'quantity',

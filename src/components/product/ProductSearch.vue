@@ -60,8 +60,8 @@ const addProduct = (product: ProductResponse): void => {
     id: product.id,
     name: product.name,
     slug: product.slug,
-    price: product.price,
-    model: product.model,
+    price: product.price_retail,
+    model: product.variant?.model,
     is_enable: product.is_enable,
   }
   const updated = [...selectedProducts.value, shortProduct]
@@ -120,11 +120,11 @@ const onBlur = (): void => {
           @mousedown.prevent="addProduct(product)"
         >
           <div class="flex-1 min-w-0">
-            <div class="font-medium text-sm truncate">{{ product.name || product.model }}</div>
-            <div class="text-xs text-muted-foreground truncate">{{ product.model }}</div>
+            <div class="font-medium text-sm truncate">{{ product.name || product.variant?.model }}</div>
+            <div class="text-xs text-muted-foreground truncate">{{ product.variant?.model }}</div>
           </div>
-          <span v-if="product.price" class="text-sm text-muted-foreground shrink-0">
-            {{ Number(product.price).toLocaleString() }} ₽
+          <span v-if="product.price_retail" class="text-sm text-muted-foreground shrink-0">
+            {{ Number(product.price_retail).toLocaleString() }} ₽
           </span>
           <Plus class="h-4 w-4 shrink-0 text-muted-foreground opacity-0 group-hover/item:opacity-100 transition-opacity" />
         </button>

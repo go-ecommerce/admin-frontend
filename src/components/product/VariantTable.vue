@@ -18,25 +18,11 @@ defineProps<{
 
 const router = useRouter()
 
-const fileStorageUrl = import.meta.env.VITE_FILE_STORAGE_URL || ''
-
 const columns: ColumnDef<ProductVariantListItem>[] = [
   {
-    id: 'image',
-    header: '',
-    cell: ({ row }) => {
-      const image = row.original.image?.string
-      return h('div', { class: 'w-12' }, [
-        image
-          ? h('img', {
-              src: fileStorageUrl + image,
-              alt: row.original.name || '',
-              class: 'h-10 w-10 object-cover rounded',
-            })
-          : h('div', { class: 'h-10 w-10 rounded bg-muted' }),
-      ])
-    },
-    enableSorting: false,
+    accessorKey: 'model',
+    header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Model' }),
+    cell: ({ row }) => h('div', { class: 'font-medium' }, row.getValue('model') ?? '—'),
   },
   {
     accessorKey: 'name',
