@@ -217,6 +217,7 @@ import {
   Settings2,
   Share2,
   Shell,
+  ShoppingBag,
   Sparkles,
   SquareTerminal,
   Trash2,
@@ -280,6 +281,11 @@ const data = {
       url: '/dashboard',
       icon: SquareTerminal,
       isActive: true,
+    },
+    {
+      title: 'Orders',
+      url: '/order',
+      icon: ShoppingBag,
     },
     {
       title: 'Categories',

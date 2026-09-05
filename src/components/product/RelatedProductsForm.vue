@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Loader2, Package, Save, X } from 'lucide-vue-next'
-import { ref, watch, computed, onMounted } from 'vue'
+
+import { computed, onMounted, ref, watch } from 'vue'
 
 import ProductSearch from '@/components/product/ProductSearch.vue'
 import { Button } from '@/components/ui/button'
@@ -14,7 +15,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/components/ui/toast/use-toast'
 import ProductService from '@/services/ProductService'
-import type { ProductVariantResponse, ShortProduct } from '@/utils/types/api/generatedApiGo'
+import type { ProductVariantResponse, VariantCardResponse } from '@/utils/types/api/generatedApiGo'
 
 const props = defineProps<{
   variants: ProductVariantResponse[]
@@ -23,7 +24,7 @@ const props = defineProps<{
 const { toast } = useToast()
 
 const selectedVariantId = ref<string>('')
-const relatedMap = ref<Record<string, ShortProduct[]>>({})
+const relatedMap = ref<Record<string, VariantCardResponse[]>>({})
 const loading = ref(false)
 const saving = ref(false)
 
@@ -94,10 +95,7 @@ const save = async () => {
     </div>
 
     <template v-else>
-      <ProductSearch
-        :model-value="currentRelated"
-        @update:model-value="currentRelated = $event"
-      />
+      <ProductSearch :model-value="currentRelated" @update:model-value="currentRelated = $event" />
 
       <div v-if="currentRelated.length" class="border rounded-md divide-y">
         <div
@@ -110,8 +108,8 @@ const save = async () => {
             <div class="text-sm font-medium truncate">{{ product.name }}</div>
             <div class="text-xs text-muted-foreground truncate">{{ product.model }}</div>
           </div>
-          <span v-if="product.price" class="text-sm text-muted-foreground shrink-0">
-            {{ Number(product.price).toLocaleString() }} ₽
+          <span v-if="product.price_retail" class="text-sm text-muted-foreground shrink-0">
+            {{ Number(product.price_retail).toLocaleString() }} ₽
           </span>
           <button
             type="button"

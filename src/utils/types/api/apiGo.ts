@@ -1,4 +1,5 @@
 import type {
+  AdminOrderResponse,
   AttributeGroupResponse,
   AttributeResponse,
   AttributeValueResponse,
@@ -39,7 +40,6 @@ export interface ProductAttributesResponse {
   groups: ProductAttributeGroup[]
 }
 
-
 export interface ICategoryRequest {
   page: number
   page_size: number
@@ -69,6 +69,21 @@ export interface ICollectionResponse {
 export interface IProductRequest {
   page: number
   page_size: number
+}
+
+export interface IOrderRequest {
+  page: number
+  page_size: number
+  status?: string
+  payment_status?: string
+  user_id?: string
+  created_from?: string
+  created_to?: string
+}
+
+export interface IOrderResponse {
+  items: AdminOrderResponse[]
+  pagination: IPagination
 }
 
 export interface IProductResponse {

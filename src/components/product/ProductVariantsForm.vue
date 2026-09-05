@@ -29,8 +29,8 @@ import type {
   CategoryResponse,
   CreateProductVariantRequest,
   ProductVariantResponse,
-  ShortProduct,
   UpdateProductVariantRequest,
+  VariantCardResponse,
 } from '@/utils/types/api/generatedApiGo'
 
 const props = defineProps<{
@@ -82,7 +82,7 @@ const showMetaAdd = ref(false)
 const showMetaEdit = ref<Record<string, boolean>>({})
 const showRelatedEdit = ref<Record<string, boolean>>({})
 const showCategoriesEdit = ref<Record<string, boolean>>({})
-const relatedMap = ref<Record<string, ShortProduct[]>>({})
+const relatedMap = ref<Record<string, VariantCardResponse[]>>({})
 const categoriesMap = ref<Record<string, CategoryResponse[]>>({})
 const categorySearchQuery = ref('')
 
@@ -131,7 +131,10 @@ const addCategoryToVariant = (variantId: string, categoryId: string) => {
   if (existing.some((c) => c.id === categoryId)) return
   const category = categories.value.items?.find((c: any) => c.id === categoryId)
   if (category) {
-    categoriesMap.value[variantId] = [...existing, { id: category.id, name: category.name, slug: category.slug } as CategoryResponse]
+    categoriesMap.value[variantId] = [
+      ...existing,
+      { id: category.id, name: category.name, slug: category.slug } as CategoryResponse,
+    ]
   }
 }
 
@@ -146,7 +149,12 @@ const startEdit = (variant: ProductVariantResponse) => {
     meta_h1: variant.meta_h1 || '',
     meta_description: variant.meta_description || '',
     meta_keyword: variant.meta_keyword || '',
-    category_id: (typeof variant.category_id === 'string' ? variant.category_id : variant.category_id?.valid ? variant.category_id.uuid : '') || '',
+    category_id:
+      (typeof variant.category_id === 'string'
+        ? variant.category_id
+        : variant.category_id?.valid
+          ? variant.category_id.uuid
+          : '') || '',
     sort_order: variant.sort_order || 0,
     is_enable: variant.is_enable ?? true,
   }
@@ -300,7 +308,10 @@ const cancelAdd = () => {
               <ComboboxAnchor class="w-full">
                 <ComboboxTrigger as-child>
                   <Button variant="outline" class="w-full justify-between bg-white">
-                    {{ categories.items?.find((c) => c.id === editForms[variant.id!].category_id)?.name || 'Выберите категорию' }}
+                    {{
+                      categories.items?.find((c) => c.id === editForms[variant.id!].category_id)
+                        ?.name || 'Выберите категорию'
+                    }}
                   </Button>
                 </ComboboxTrigger>
               </ComboboxAnchor>
@@ -308,11 +319,7 @@ const cancelAdd = () => {
                 <ComboboxInput placeholder="Поиск категории..." />
                 <ComboboxEmpty>Категории не найдены</ComboboxEmpty>
                 <ComboboxGroup>
-                  <ComboboxItem
-                    v-for="cat in categories.items"
-                    :key="cat.id"
-                    :value="cat.id ?? ''"
-                  >
+                  <ComboboxItem v-for="cat in categories.items" :key="cat.id" :value="cat.id ?? ''">
                     {{ cat.name }}
                     <ComboboxItemIndicator><Check class="ml-auto h-4 w-4" /></ComboboxItemIndicator>
                   </ComboboxItem>
@@ -401,7 +408,10 @@ const cancelAdd = () => {
               </ComboboxGroup>
             </ComboboxList>
           </Combobox>
-          <div v-if="categoriesMap[variant.id!]?.length" class="border rounded-md divide-y bg-white">
+          <div
+            v-if="categoriesMap[variant.id!]?.length"
+            class="border rounded-md divide-y bg-white"
+          >
             <div
               v-for="cat in categoriesMap[variant.id!]"
               :key="cat.id"
@@ -461,8 +471,8 @@ const cancelAdd = () => {
                 <div class="text-sm font-medium truncate">{{ product.name }}</div>
                 <div class="text-xs text-muted-foreground truncate">{{ product.model }}</div>
               </div>
-              <span v-if="product.price" class="text-sm text-muted-foreground shrink-0">
-                {{ Number(product.price).toLocaleString() }} ₽
+              <span v-if="product.price_retail" class="text-sm text-muted-foreground shrink-0">
+                {{ Number(product.price_retail).toLocaleString() }} ₽
               </span>
               <button
                 type="button"
@@ -541,7 +551,10 @@ const cancelAdd = () => {
             <ComboboxAnchor class="w-full">
               <ComboboxTrigger as-child>
                 <Button variant="outline" class="w-full justify-between">
-                  {{ categories.items?.find((c) => c.id === addForm.category_id)?.name || 'Выберите категорию' }}
+                  {{
+                    categories.items?.find((c) => c.id === addForm.category_id)?.name ||
+                    'Выберите категорию'
+                  }}
                 </Button>
               </ComboboxTrigger>
             </ComboboxAnchor>
@@ -549,11 +562,7 @@ const cancelAdd = () => {
               <ComboboxInput placeholder="Поиск категории..." />
               <ComboboxEmpty>Категории не найдены</ComboboxEmpty>
               <ComboboxGroup>
-                <ComboboxItem
-                  v-for="cat in categories.items"
-                  :key="cat.id"
-                  :value="cat.id ?? ''"
-                >
+                <ComboboxItem v-for="cat in categories.items" :key="cat.id" :value="cat.id ?? ''">
                   {{ cat.name }}
                   <ComboboxItemIndicator><Check class="ml-auto h-4 w-4" /></ComboboxItemIndicator>
                 </ComboboxItem>

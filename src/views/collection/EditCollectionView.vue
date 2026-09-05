@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { useCollectionStore } from '@/stores/collection'
-import type { ShortProductResponse, UpdateCollectionRequest } from '@/utils/types/api/generatedApiGo'
+import type { UpdateCollectionRequest, VariantCardResponse } from '@/utils/types/api/generatedApiGo'
 
 const collectionStore = useCollectionStore()
 const { getCollectionWithProducts, updateCollection } = collectionStore
@@ -27,7 +27,7 @@ const collectionInfo = ref<{ name: string; slug: string; description?: string }>
   slug: '',
   description: undefined,
 })
-const selectedVariants = ref<ShortProductResponse[]>([])
+const selectedVariants = ref<VariantCardResponse[]>([])
 
 onMounted(async () => {
   if (!uuid) {
@@ -134,13 +134,13 @@ const updateWithUpload = async () => {
                 <div class="text-sm font-medium truncate">{{ product.name }}</div>
                 <div class="text-xs text-muted-foreground truncate">{{ product.model }}</div>
               </div>
-              <span v-if="product.price" class="text-sm text-muted-foreground shrink-0">
-                {{ Number(product.price).toLocaleString() }} ₽
+              <span v-if="product.price_retail" class="text-sm text-muted-foreground shrink-0">
+                {{ Number(product.price_retail).toLocaleString() }} ₽
               </span>
               <button
                 type="button"
                 class="shrink-0 rounded p-0.5 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all"
-                @click="selectedVariants = selectedVariants.filter(p => p.id !== product.id)"
+                @click="selectedVariants = selectedVariants.filter((p) => p.id !== product.id)"
               >
                 <X class="h-4 w-4" />
               </button>

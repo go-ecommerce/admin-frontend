@@ -5,10 +5,10 @@ import { storeToRefs } from 'pinia'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import ProductAttributesForm from '@/components/product/ProductAttributesForm.vue'
 import ProductIdentifierForm from '@/components/product/ProductIdentifierForm.vue'
 import ProductPhysicalAttribute from '@/components/product/ProductPhysicalAttribute.vue'
 import ProductStockForm from '@/components/product/ProductStockForm.vue'
-import ProductAttributesForm from '@/components/product/ProductAttributesForm.vue'
 import ProductVariantsForm from '@/components/product/ProductVariantsForm.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -67,12 +67,8 @@ const {
   updateProductVariant,
   deleteProductVariant,
 } = productStore
-const {
-  currentProduct,
-  currentProductMedium,
-  currentProductAttributes,
-  currentProductVariants,
-} = storeToRefs(productStore)
+const { currentProduct, currentProductImages, currentProductAttributes, currentProductVariants } =
+  storeToRefs(productStore)
 
 const selectedAttributeValueIds = ref<string[]>([])
 const attributesWereModified = ref(false)
@@ -121,7 +117,7 @@ const updateAll = async () => {
   try {
     uploadedFiles = await loadFile()
 
-    const existingMediaIds = currentProductMedium.value
+    const existingMediaIds = currentProductImages.value
       .map((file) => file.id)
       .filter((id): id is string => typeof id === 'string')
 
@@ -314,7 +310,7 @@ onMounted(async () => {
                 <CardTitle>Image Product</CardTitle>
               </CardHeader>
               <CardContent>
-                <FileUploaded v-model="currentProductMedium" />
+                <FileUploaded v-model="currentProductImages" />
                 <FileUpload
                   @onChange="handleFilesChange"
                   class="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800"
@@ -379,7 +375,8 @@ onMounted(async () => {
           <CardHeader>
             <CardTitle>Варианты товара</CardTitle>
             <p class="text-sm text-muted-foreground">
-              Один товар может присутствовать в нескольких категориях с разными названиями и описаниями
+              Один товар может присутствовать в нескольких категориях с разными названиями и
+              описаниями
             </p>
           </CardHeader>
           <CardContent>

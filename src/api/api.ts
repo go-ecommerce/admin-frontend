@@ -10,7 +10,7 @@ const baseConfig: FetchOptions = {
   headers: {
     Accept: 'application/json',
   },
-  async onResponseError({ request, response, options }) {
+  async onResponseError({ request, response }) {
     if (response?.status === 422) {
       const message = response._data.message
       useErrorStore().setErrors(response._data.errors)
@@ -19,8 +19,12 @@ const baseConfig: FetchOptions = {
     }
 
     if (response?.status === 401) {
-      localStorage.removeItem('api_token')
-      window.location.replace('/')
+      const requestUrl = typeof request === 'string' ? request : request.url
+      const isLoginRequest = String(requestUrl).includes('/auth/login')
+      if (!isLoginRequest) {
+        localStorage.removeItem(USER.TOKEN_KEY_LS)
+        window.location.replace('/')
+      }
     }
   },
 }

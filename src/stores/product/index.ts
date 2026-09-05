@@ -4,17 +4,22 @@ import { ref } from 'vue'
 
 import { useToast } from '@/components/ui/toast'
 import ProductService from '@/services/ProductService'
-import type { IProductRequest, IProductResponse, IVariantListResponse, ProductAttributesResponse } from '@/utils/types/api/apiGo.ts'
+import type {
+  IProductRequest,
+  IProductResponse,
+  IVariantListResponse,
+  ProductAttributesResponse,
+} from '@/utils/types/api/apiGo.ts'
 import type {
   CreateProductRequest,
   CreateProductVariantRequest,
-  MediumResponse,
+  ImageDTO,
   ProductResponse,
   ProductVariantResponse,
+  SyncRelatedProductRequest,
   UpdateProductRequest,
   UpdateProductVariantRequest,
-  ShortProduct,
-  SyncRelatedProductRequest,
+  VariantCardResponse,
 } from '@/utils/types/api/generatedApiGo'
 
 const defaultPagination = { page: 1, page_size: 10, total: 0, last_page: 1 }
@@ -34,8 +39,8 @@ export const useProductStore = defineStore('product', () => {
   const products = ref<IProductResponse>(defaultDataProducts)
   const allVariants = ref<IVariantListResponse>(defaultDataVariants)
   const currentProduct = ref<ProductResponse | null>(null)
-  const currentProductMedium = ref<MediumResponse[]>([])
-  const currentRelatedProducts = ref<ShortProduct[]>([])
+  const currentProductImages = ref<ImageDTO[]>([])
+  const currentRelatedProducts = ref<VariantCardResponse[]>([])
   const currentProductAttributes = ref<ProductAttributesResponse | null>(null)
   const currentProductVariants = ref<ProductVariantResponse[]>([])
   const productsWithoutVariantsCount = ref<number>(0)
@@ -101,9 +106,9 @@ export const useProductStore = defineStore('product', () => {
   const getProductsWithMedium = async (uuid: string): Promise<void> => {
     try {
       isLoading.value = true
-      const { product, medium } = await ProductService.getProductWithMediumById(uuid)
+      const { product, images } = await ProductService.getProductWithMediumById(uuid)
       currentProduct.value = product || null
-      currentProductMedium.value = medium || []
+      currentProductImages.value = images || []
     } catch (error: any) {
       toast({
         title: 'Error fetching products.',
@@ -316,7 +321,7 @@ export const useProductStore = defineStore('product', () => {
     allVariants,
     productsWithoutVariantsCount,
     currentProduct,
-    currentProductMedium,
+    currentProductImages,
     currentRelatedProducts,
     currentProductAttributes,
     currentProductVariants,

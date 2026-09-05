@@ -1,16 +1,17 @@
 <script setup lang="ts">
+import { Loader2 } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 
 import { ref } from 'vue'
 
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuthStore } from '@/stores/auth'
 import type { AuthRequest } from '@/utils/types/api/generatedApiGo'
 
-// todo добавить лоудер на загрузку
-const { isLoading } = storeToRefs(useAuthStore())
+const { isLoading, loginError } = storeToRefs(useAuthStore())
 const { login } = useAuthStore()
 
 const form = ref<AuthRequest>({ email: '', password: '' })
@@ -35,26 +36,31 @@ const form = ref<AuthRequest>({ email: '', password: '' })
               type="email"
               placeholder="m@example.com"
               required
+              :disabled="isLoading"
             />
           </div>
           <div class="grid gap-2">
             <div class="flex items-center">
               <Label for="password">Пароль</Label>
             </div>
-            <Input id="password" type="password" v-model="form.password" required />
+            <Input
+              id="password"
+              type="password"
+              v-model="form.password"
+              required
+              :disabled="isLoading"
+            />
           </div>
-          <Button type="submit" class="w-full"> Вход </Button>
+          <Alert v-if="loginError" variant="destructive">
+            <AlertDescription>{{ loginError }}</AlertDescription>
+          </Alert>
+          <Button type="submit" class="w-full" :disabled="isLoading">
+            <Loader2 v-if="isLoading" class="animate-spin" />
+            {{ isLoading ? 'Вход…' : 'Вход' }}
+          </Button>
         </form>
       </div>
     </div>
-    <div class="hidden bg-muted lg:block">
-      <!--      <img-->
-      <!--        src="/placeholder.svg"-->
-      <!--        alt="Image"-->
-      <!--        width="1920"-->
-      <!--        height="1080"-->
-      <!--        class="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"-->
-      <!--      >-->
-    </div>
+    <div class="hidden bg-muted lg:block" />
   </div>
 </template>

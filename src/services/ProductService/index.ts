@@ -1,5 +1,10 @@
 import { api } from '@/api/api'
-import type { IProductRequest, IProductResponse, IVariantListResponse, ProductAttributesResponse } from '@/utils/types/api/apiGo.ts'
+import type {
+  IProductRequest,
+  IProductResponse,
+  IVariantListResponse,
+  ProductAttributesResponse,
+} from '@/utils/types/api/apiGo.ts'
 import type {
   CategoryResponse,
   CreateProductRequest,
@@ -7,10 +12,10 @@ import type {
   ProductResponse,
   ProductVariantResponse,
   ProductWithMediumResponse,
+  SyncRelatedProductRequest,
   UpdateProductRequest,
   UpdateProductVariantRequest,
-  SyncRelatedProductRequest,
-  ShortProduct,
+  VariantCardResponse,
 } from '@/utils/types/api/generatedApiGo'
 
 export default class ProductService {
@@ -19,7 +24,9 @@ export default class ProductService {
     return data
   }
 
-  public static async getProductsWithoutVariants(payload: IProductRequest): Promise<IProductResponse> {
+  public static async getProductsWithoutVariants(
+    payload: IProductRequest,
+  ): Promise<IProductResponse> {
     const { data }: any = await api.get('/product/list/without-variants', payload)
     return data
   }
@@ -39,11 +46,12 @@ export default class ProductService {
     return data
   }
 
-  public static async findProduct(query: String): Promise<ProductResponse[]> {
-    const { data }: any = await api.get(`/product/find`, {
-      product: query,
+  public static async searchVariants(query: string): Promise<VariantCardResponse[]> {
+    const { data }: any = await api.get('/search', {
+      q: query,
+      page_size: 20,
     })
-    return data
+    return data?.items ?? []
   }
 
   public static async updateApiProduct(
@@ -61,18 +69,18 @@ export default class ProductService {
     await api.post(`/product/variant/${uuid}/sync-related-products`, payload)
   }
 
-  public static async getRelatedProducts(uuid: string): Promise<ShortProduct[]> {
-    const { data }: any = await api.get(`/product/variant/${uuid}/related-products`)
-    return data
+  public static async getRelatedProducts(uuid: string): Promise<VariantCardResponse[]> {
+    const { data }: any = await api.get(`/product/variant/id/${uuid}/related-products`)
+    return data ?? []
   }
 
   public static async getRelatedProductsBatch(
     variantIds: string[],
-  ): Promise<Record<string, ShortProduct[]>> {
+  ): Promise<Record<string, VariantCardResponse[]>> {
     const { data }: any = await api.post(`/product/variant/related-products/batch`, {
       variant_ids: variantIds,
     })
-    return data
+    return data ?? {}
   }
 
   public static async syncProductAttributes(
@@ -114,10 +122,7 @@ export default class ProductService {
     return data
   }
 
-  public static async deleteProductVariant(
-    productId: string,
-    variantId: string,
-  ): Promise<void> {
+  public static async deleteProductVariant(productId: string, variantId: string): Promise<void> {
     await api.delete(`/product/${productId}/variants/${variantId}`)
   }
 
@@ -141,7 +146,6 @@ export default class ProductService {
   public static async getVariantCategoriesBatch(
     variantIds: string[],
   ): Promise<Record<string, CategoryResponse[]>> {
-    console.log('Fetching categories for variant IDs:', variantIds)
     const results: Record<string, CategoryResponse[]> = {}
     await Promise.all(
       variantIds.map(async (id) => {

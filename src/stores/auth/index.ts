@@ -1,9 +1,11 @@
-import { defineStore } from 'pinia'
 import { cloneDeep } from 'lodash-es'
+import { defineStore } from 'pinia'
+
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import AuthService from '@/services/AuthService'
+import { translateAuthError } from '@/utils/authErrors'
 import { USER } from '@/utils/constants/user'
 import type { AuthRequest, UserInfoResponse } from '@/utils/types/api/generatedApiGo'
 
@@ -33,32 +35,35 @@ export const setUserData = (data: UserInfoResponse) => {
 export const useAuthStore = defineStore('Auth', () => {
   const isLoggedIn = ref<boolean>(!!localStorage.getItem(USER.TOKEN_KEY_LS))
   const isLoading = ref<boolean>(false)
+  const loginError = ref<string>('')
   const user = ref<UserInfoResponse>(cloneDeep(userStartData))
 
   const router = useRouter()
 
+  const clearSession = (): void => {
+    localStorage.removeItem(USER.TOKEN_KEY_LS)
+    isLoggedIn.value = false
+    user.value = cloneDeep(userStartData)
+  }
+
   const initStore = async (): Promise<void> => {
     try {
       await getUser()
-      isLoggedIn.value = !!user.value
-    } catch (error: any) {
+      isLoggedIn.value = true
+    } catch (error: unknown) {
       removeToken()
       throw error
     }
   }
 
   const getUser = async () => {
-    try {
-      const data = await AuthService.getUserInfo()
-      if (data) user.value = setUserData(data)
-    } catch (error: any) {
-      throw error
+    const data = await AuthService.getUserInfo()
+    if (!data.is_admin) {
+      throw new Error('Недостаточно прав для входа в админ-панель')
     }
+    user.value = setUserData(data)
   }
 
-  const getToken = (): string | null => {
-    return localStorage.getItem(USER.TOKEN_KEY_LS)
-  }
   const setToken = (token: string): void => {
     localStorage.setItem(USER.TOKEN_KEY_LS, token)
   }
@@ -66,28 +71,32 @@ export const useAuthStore = defineStore('Auth', () => {
   const login = async (body: AuthRequest) => {
     try {
       isLoading.value = true
+      loginError.value = ''
       const token = await AuthService.loginUser(body)
-      setToken(token ?? '')
-      await initStore()
+      setToken(token)
+      const data = await AuthService.getUserInfo()
+      if (!data.is_admin) {
+        clearSession()
+        loginError.value = 'Недостаточно прав для входа в админ-панель'
+        return
+      }
+      user.value = setUserData(data)
+      isLoggedIn.value = true
       await router.push({ name: 'dashboard' })
-    } catch (error: any) {
-      throw error
+    } catch (error: unknown) {
+      clearSession()
+      loginError.value = translateAuthError(error)
     } finally {
       isLoading.value = false
     }
   }
 
   const logout = () => {
-    try {
-      removeToken()
-    } catch (error: any) {
-      throw error
-    }
+    removeToken()
   }
 
   const removeToken = () => {
-    localStorage.removeItem(USER.TOKEN_KEY_LS)
-    isLoggedIn.value = false
+    clearSession()
     window.location.href = '/'
   }
 
@@ -95,6 +104,7 @@ export const useAuthStore = defineStore('Auth', () => {
     user,
     isLoggedIn,
     isLoading,
+    loginError,
     initStore,
     login,
     logout,

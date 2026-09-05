@@ -10,8 +10,8 @@
       @drop.prevent="onDrop"
     >
       <img
-        :src="fileStorageUrl + media.path"
-        alt="uploaded"
+        :src="imageSrc(media, 'card')"
+        :alt="media.alt || 'uploaded'"
         class="w-full h-full object-cover rounded-md border"
       />
       <button
@@ -29,17 +29,18 @@ import { Trash2 } from 'lucide-vue-next'
 
 import { onMounted, ref, watch } from 'vue'
 
-const fileStorageUrl = import.meta.env.VITE_FILE_STORAGE_URL
+import { imageSrc } from '@/utils/media'
+import type { ImageDTO } from '@/utils/types/api/generatedApiGo'
 
 const props = defineProps<{
-  modelValue: any[]
+  modelValue: ImageDTO[]
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: any[]): void
+  (e: 'update:modelValue', val: ImageDTO[]): void
 }>()
 
-const localMedia = ref<any[]>([])
+const localMedia = ref<ImageDTO[]>([])
 const dragIndex = ref<number | null>(null)
 
 onMounted(() => {
