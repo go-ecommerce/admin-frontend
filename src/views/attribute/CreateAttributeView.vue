@@ -75,18 +75,15 @@ const attributeInfo = ref<CreateAttributeRequest>({
 const saveAll = async () => {
   try {
     const result = await createAttribute(attributeInfo.value)
-    console.log('Created attribute result:', result)
 
     // Redirect to edit page so user can add values immediately
     if (result?.id) {
-      console.log('Redirecting to edit page with ID:', result.id)
       await router.push({ name: 'attribute-edit', params: { id: result.id } })
     } else {
-      console.log('No ID found, redirecting to list')
       await router.push({ name: 'attribute' })
     }
-  } catch (error) {
-    console.error('Error creating attribute:', error)
+  } catch {
+    // store already shows a toast
   }
 }
 </script>

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { useAttributeStore } from '@/stores/attribute'
+import { extractApiErrorMessage } from '@/utils/apiError'
 import type { UpdateAttributeGroupRequest } from '@/utils/types/api/generatedApiGo'
 
 // Инициализация хранилища, роутера и toast
@@ -30,7 +31,7 @@ onMounted(async () => {
     } catch (error: any) {
       toast({
         title: 'Error loading attribute group',
-        description: error.message || 'Failed to load attribute group data',
+        description: extractApiErrorMessage(error, 'Failed to load attribute group data'),
         variant: 'destructive',
       })
     }
@@ -66,7 +67,7 @@ const updateWithUpload = async () => {
   } catch (error: any) {
     toast({
       title: 'Error updating attribute group',
-      description: error.message || 'Failed to update attribute group',
+      description: extractApiErrorMessage(error, 'Failed to update attribute group'),
       variant: 'destructive',
     })
   }

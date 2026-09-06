@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { useAttributeStore } from '@/stores/attribute'
+import { extractApiErrorMessage } from '@/utils/apiError'
 import type {
   CreateAttributeRequest,
   CreateAttributeValueRequest,
@@ -36,8 +37,8 @@ const loadAttributeValues = async () => {
   if (!uuid) return
   try {
     await getAttributeValuesByAttributeId(uuid)
-  } catch (error) {
-    console.error('Failed to load attribute values:', error)
+  } catch {
+    // store already shows a toast
   }
 }
 
@@ -50,7 +51,7 @@ onMounted(async () => {
     } catch (error: any) {
       toast({
         title: 'Error loading attribute',
-        description: error.message || 'Failed to load attribute data',
+        description: extractApiErrorMessage(error, 'Failed to load attribute data'),
         variant: 'destructive',
       })
     }
@@ -87,7 +88,7 @@ const handleAddValue = async (valueData: {
   } catch (error: any) {
     toast({
       title: 'Error adding value',
-      description: error.message,
+      description: extractApiErrorMessage(error, 'Произошла ошибка'),
       variant: 'destructive',
     })
   }
@@ -100,7 +101,7 @@ const handleDeleteValue = async (id: string) => {
   } catch (error: any) {
     toast({
       title: 'Error deleting value',
-      description: error.message,
+      description: extractApiErrorMessage(error, 'Произошла ошибка'),
       variant: 'destructive',
     })
   }
@@ -137,7 +138,7 @@ const updateWithUpload = async () => {
   } catch (error: any) {
     toast({
       title: 'Error updating attribute',
-      description: error.message || 'Failed to update attribute',
+      description: extractApiErrorMessage(error, 'Failed to update attribute'),
       variant: 'destructive',
     })
   }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { File, PlusCircle, TriangleAlert } from 'lucide-vue-next'
+import { PlusCircle, TriangleAlert } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 
 import { ref, watch } from 'vue'
@@ -32,6 +32,7 @@ type ProductFilter = 'all' | 'without_variants'
 const productFilter = ref<ProductFilter>(
   route.query.filter === 'without_variants' ? 'without_variants' : 'all',
 )
+const activeTab = ref(route.query.tab === 'variants' ? 'variants' : 'products')
 const productParams = ref({ page: 1, pageSize: 10 })
 const variantParams = ref({ page: 1, pageSize: 10 })
 
@@ -61,11 +62,17 @@ const setFilter = (filter: ProductFilter) => {
   fetchProducts()
 }
 
-watch(productParams.value, fetchProducts, { immediate: true })
-watch(variantParams.value, fetchVariants)
+watch(productParams, fetchProducts, { deep: true, immediate: true })
+watch(variantParams, fetchVariants, { deep: true })
 
-const onTabChange = (val: string) => {
-  if (val === 'variants' && allVariants.value.items.length === 0) {
+if (activeTab.value === 'variants') {
+  fetchVariants()
+}
+
+const onTabChange = (val: string | number) => {
+  const tab = String(val)
+  activeTab.value = tab
+  if (tab === 'variants' && allVariants.value.items.length === 0) {
     fetchVariants()
   }
 }
@@ -73,17 +80,13 @@ const onTabChange = (val: string) => {
 
 <template>
   <main class="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-    <Tabs default-value="products" @update:model-value="onTabChange">
+    <Tabs :model-value="activeTab" @update:model-value="onTabChange">
       <div class="flex items-center gap-2">
         <TabsList>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="variants">Variants</TabsTrigger>
         </TabsList>
         <div class="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" class="h-7 gap-1">
-            <File class="h-3.5 w-3.5" />
-            <span class="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
-          </Button>
           <Button size="sm" class="h-7 gap-1" @click="router.push({ name: 'product-create' })">
             <PlusCircle class="h-3.5 w-3.5" />
             <span class="sr-only sm:not-sr-only sm:whitespace-nowrap">Add Product</span>

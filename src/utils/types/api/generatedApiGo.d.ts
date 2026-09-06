@@ -489,6 +489,65 @@ export interface CreateProductVariantRequest {
   sort_order?: number;
 }
 
+export interface DashboardCatalog {
+  categories?: number;
+  collections?: number;
+  products?: number;
+  products_without_variants?: number;
+  variants?: number;
+  variants_out_of_stock?: number;
+}
+
+export interface DashboardCustomers {
+  new_today?: number;
+  total?: number;
+}
+
+export interface DashboardOrders {
+  by_payment_status?: DashboardOrdersByPaymentStatus;
+  by_status?: DashboardOrdersByStatus;
+  today?: number;
+  total?: number;
+}
+
+export interface DashboardOrdersByPaymentStatus {
+  failed?: number;
+  paid?: number;
+  refunded?: number;
+  unpaid?: number;
+}
+
+export interface DashboardOrdersByStatus {
+  cancelled?: number;
+  delivered?: number;
+  paid?: number;
+  pending?: number;
+  processing?: number;
+  refunded?: number;
+  shipped?: number;
+}
+
+export interface DashboardPeriod {
+  from?: string;
+  to?: string;
+}
+
+export interface DashboardResponse {
+  average_order_value?: string;
+  catalog?: DashboardCatalog;
+  customers?: DashboardCustomers;
+  orders?: DashboardOrders;
+  period?: DashboardPeriod;
+  revenue?: DashboardRevenue;
+}
+
+export interface DashboardRevenue {
+  currency?: string;
+  paid_only?: boolean;
+  period?: string;
+  today?: string;
+}
+
 export interface FullPagingData {
   last_page?: number;
   page?: number;
@@ -577,6 +636,12 @@ export interface JSONResponseCollectionResponse {
 export interface JSONResponseCollectionWithProductResponse {
   code?: number;
   data?: CollectionWithProductResponse;
+  message?: string;
+}
+
+export interface JSONResponseDashboardResponse {
+  code?: number;
+  data?: DashboardResponse;
   message?: string;
 }
 

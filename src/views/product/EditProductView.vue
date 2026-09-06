@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/components/ui/toast/use-toast'
 import MediaService from '@/services/MediaService'
 import { useProductStore } from '@/stores/product'
+import { extractApiErrorMessage } from '@/utils/apiError'
 import type { MediumResponse } from '@/utils/types/api/generatedApiGo'
 
 interface EditFormState {
@@ -162,7 +163,7 @@ const updateAll = async () => {
         .map((id) => MediaService.deleteFile(id)),
     )
 
-    console.error('Ошибка при сохранении продукта:', error)
+    // rollback uploaded files; store already shows a toast for API errors
   }
 }
 
@@ -217,7 +218,7 @@ onMounted(async () => {
     } catch (error: any) {
       toast({
         title: 'Ошибка загрузки Товара',
-        description: error.message || 'Не удалось загрузить данные товара',
+        description: extractApiErrorMessage(error, 'Не удалось загрузить данные товара'),
         variant: 'destructive',
       })
     }

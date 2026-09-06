@@ -119,7 +119,7 @@ const saveAll = async () => {
         .map((id) => MediaService.deleteFile(id)),
     )
 
-    console.error('Ошибка при сохранении продукта:', error)
+    // rollback uploaded files; store already shows a toast for API errors
   }
 }
 

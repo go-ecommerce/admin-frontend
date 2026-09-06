@@ -2,6 +2,7 @@
 import { storeToRefs } from 'pinia'
 
 import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import OrderTable from '@/components/order/OrderTable.vue'
 import { Button } from '@/components/ui/button'
@@ -33,12 +34,24 @@ import type { IOrderRequest } from '@/utils/types/api/apiGo'
 const orderStore = useOrderStore()
 const { orders, isLoading } = storeToRefs(orderStore)
 const { getOrders } = orderStore
+const route = useRoute()
+const router = useRouter()
 
 const ALL = 'all'
 
+const parseStatus = (value: unknown) => {
+  const next = String(value || ALL)
+  return (ORDER_STATUSES as readonly string[]).includes(next) ? next : ALL
+}
+
+const parsePayment = (value: unknown) => {
+  const next = String(value || ALL)
+  return (PAYMENT_STATUSES as readonly string[]).includes(next) ? next : ALL
+}
+
 const params = ref({ page: 1, pageSize: 10 })
-const status = ref(ALL)
-const paymentStatus = ref(ALL)
+const status = ref(parseStatus(route.query.status))
+const paymentStatus = ref(parsePayment(route.query.payment_status))
 
 const fetchOrders = async () => {
   const payload: IOrderRequest = {
@@ -54,22 +67,40 @@ const fetchOrders = async () => {
   }
 }
 
+const syncQuery = () => {
+  const query: Record<string, string> = {}
+  if (status.value !== ALL) query.status = status.value
+  if (paymentStatus.value !== ALL) query.payment_status = paymentStatus.value
+  router.replace({ name: 'order', query })
+}
+
 watch([params, status, paymentStatus], fetchOrders, { immediate: true, deep: true })
 
+watch(
+  () => [route.query.status, route.query.payment_status],
+  () => {
+    status.value = parseStatus(route.query.status)
+    paymentStatus.value = parsePayment(route.query.payment_status)
+  },
+)
+
 const onStatusChange = (value: unknown) => {
-  status.value = String(value || ALL)
+  status.value = parseStatus(value)
   params.value.page = 1
+  syncQuery()
 }
 
 const onPaymentStatusChange = (value: unknown) => {
-  paymentStatus.value = String(value || ALL)
+  paymentStatus.value = parsePayment(value)
   params.value.page = 1
+  syncQuery()
 }
 
 const resetFilters = () => {
   status.value = ALL
   paymentStatus.value = ALL
   params.value.page = 1
+  syncQuery()
 }
 </script>
 

@@ -122,10 +122,4 @@ export function formatOrderDate(value?: string) {
   })
 }
 
-export function extractApiErrorMessage(error: unknown, fallback: string) {
-  const err = error as {
-    data?: { message?: string; errors?: { message?: string }[] }
-    message?: string
-  }
-  return err.data?.errors?.[0]?.message || err.data?.message || err.message || fallback
-}
+export { extractApiErrorMessage } from '@/utils/apiError'

@@ -35,8 +35,8 @@ const saveAll = async () => {
     categoryInfo.value.image_path = file.path
     await createCategory(categoryInfo.value)
     await router.push({ name: 'category' })
-  } catch (error) {
-    console.error(error)
+  } catch {
+    // store already shows a toast
   }
 }
 

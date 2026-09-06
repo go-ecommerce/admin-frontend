@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
-import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import {
   Select,
@@ -60,8 +59,8 @@ const handleBulkDelete = async () => {
     await Promise.all(idsToDelete.map((id) => deleteAttribute(id)))
     selectedRows.value = {}
     await fetchAttributes()
-  } catch (error) {
-    console.error('Error deleting attributes:', error)
+  } catch {
+    // store already shows a toast
   }
 }
 
@@ -188,7 +187,7 @@ const filteredAttributes = computed(() => {
   return filtered
 })
 
-watch([params.value, searchQuery], fetchAttributes, { immediate: true })
+watch([params, searchQuery], fetchAttributes, { deep: true, immediate: true })
 
 // Reset to page 1 when filters change
 watch([typeFilter, visibilityFilter], () => {
@@ -203,9 +202,7 @@ watch([typeFilter, visibilityFilter], () => {
 
 <template>
   <main class="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-    <Tabs default-value="all">
-      <TabsContent value="all">
-        <Card>
+    <Card>
           <CardHeader>
             <div class="flex items-center justify-between">
               <div>
@@ -296,8 +293,6 @@ watch([typeFilter, visibilityFilter], () => {
               </template>
             </div>
           </CardFooter>
-        </Card>
-      </TabsContent>
-    </Tabs>
+    </Card>
   </main>
 </template>

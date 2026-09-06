@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { useToast } from '@/components/ui/toast/use-toast'
 import AttributeService from '@/services/AttributeService'
+import { extractApiErrorMessage } from '@/utils/apiError'
 import type { ProductAttributesResponse } from '@/utils/types/api/apiGo'
 import type { AttributeResponse, AttributeValueResponse } from '@/utils/types/api/generatedApiGo'
 
@@ -69,8 +70,7 @@ watch(
             let availableValues: AttributeValueResponse[] = []
             try {
               availableValues = await AttributeService.getApiAttributeValuesByAttributeId(attr.id)
-            } catch (error) {
-              console.error(`Error loading values for attribute ${attr.id}:`, error)
+            } catch {
               // Use values from API response as fallback
               availableValues = attr.values.map(v => ({
                 id: v.id,
@@ -159,8 +159,8 @@ const onAttributeSelect = async (attribute: AttributeResponse) => {
     if (attribute.id) {
       try {
         availableValues = await AttributeService.getApiAttributeValuesByAttributeId(attribute.id)
-      } catch (error) {
-        console.error('Error loading attribute values:', error)
+      } catch {
+        availableValues = []
       }
     }
 
@@ -232,10 +232,9 @@ const createAndSelectValue = async (attributeId: string, value: string) => {
       variant: 'success',
     })
   } catch (error) {
-    console.error('Error creating attribute value:', error)
     toast({
       title: 'Ошибка создания значения',
-      description: 'Не удалось создать новое значение атрибута',
+      description: extractApiErrorMessage(error, 'Не удалось создать новое значение атрибута'),
       variant: 'destructive',
     })
   } finally {

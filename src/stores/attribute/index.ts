@@ -4,6 +4,7 @@ import { ref } from 'vue'
 
 import { useToast } from '@/components/ui/toast'
 import AttributeService from '@/services/AttributeService'
+import { extractApiErrorMessage } from '@/utils/apiError'
 import type {
   IAttributeFindRequest,
   IAttributeGroupRequest,
@@ -42,7 +43,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching attributes groups.',
-        description: error.message || 'An error occurred while fetching attributes groups.',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching attributes groups.'),
         variant: 'destructive',
       })
       throw error
@@ -58,7 +59,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching attribute group',
-        description: error.message || 'An error occurred while fetching attribute group',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching attribute group'),
         variant: 'destructive',
       })
       throw error
@@ -81,7 +82,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error creating attribute group',
-        description: error.message || 'An error occurred while creating the attribute group',
+        description: extractApiErrorMessage(error, 'An error occurred while creating the attribute group'),
         variant: 'destructive',
       })
       throw error
@@ -105,7 +106,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error updating attribute group',
-        description: error.message || 'An error occurred while updating the attribute group',
+        description: extractApiErrorMessage(error, 'An error occurred while updating the attribute group'),
         variant: 'destructive',
       })
       throw error
@@ -125,7 +126,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error deleting attribute group',
-        description: error.message || 'An error occurred while deleting the attribute group',
+        description: extractApiErrorMessage(error, 'An error occurred while deleting the attribute group'),
         variant: 'destructive',
       })
       throw error
@@ -141,7 +142,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching attributes',
-        description: error.message || 'An error occurred while fetching attributes',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching attributes'),
         variant: 'destructive',
       })
       throw error
@@ -157,7 +158,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching attribute',
-        description: error.message || 'An error occurred while fetching attribute',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching attribute'),
         variant: 'destructive',
       })
       throw error
@@ -178,7 +179,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error creating attribute',
-        description: error.message || 'An error occurred while creating the attribute',
+        description: extractApiErrorMessage(error, 'An error occurred while creating the attribute'),
         variant: 'destructive',
       })
       throw error
@@ -202,7 +203,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error updating attribute',
-        description: error.message || 'An error occurred while updating the attribute',
+        description: extractApiErrorMessage(error, 'An error occurred while updating the attribute'),
         variant: 'destructive',
       })
       throw error
@@ -222,7 +223,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error deleting attribute',
-        description: error.message || 'An error occurred while deleting the attribute',
+        description: extractApiErrorMessage(error, 'An error occurred while deleting the attribute'),
         variant: 'destructive',
       })
       throw error
@@ -238,7 +239,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error finding attributes',
-        description: error.message || 'An error occurred while finding attributes',
+        description: extractApiErrorMessage(error, 'An error occurred while finding attributes'),
         variant: 'destructive',
       })
       throw error
@@ -263,7 +264,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching attribute values',
-        description: error.message || 'An error occurred while fetching attribute values',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching attribute values'),
         variant: 'destructive',
       })
       throw error
@@ -289,7 +290,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching attribute values',
-        description: error.message || 'An error occurred while fetching attribute values',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching attribute values'),
         variant: 'destructive',
       })
       throw error
@@ -305,7 +306,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching attribute value',
-        description: error.message || 'An error occurred while fetching attribute value',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching attribute value'),
         variant: 'destructive',
       })
       throw error
@@ -325,7 +326,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error creating attribute value',
-        description: error.message || 'An error occurred while creating the attribute value',
+        description: extractApiErrorMessage(error, 'An error occurred while creating the attribute value'),
         variant: 'destructive',
       })
       throw error
@@ -349,7 +350,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error updating attribute value',
-        description: error.message || 'An error occurred while updating the attribute value',
+        description: extractApiErrorMessage(error, 'An error occurred while updating the attribute value'),
         variant: 'destructive',
       })
       throw error
@@ -369,7 +370,7 @@ export const useAttributeStore = defineStore('attribute', () => {
     } catch (error: any) {
       toast({
         title: 'Error deleting attribute value',
-        description: error.message || 'An error occurred while deleting the attribute value',
+        description: extractApiErrorMessage(error, 'An error occurred while deleting the attribute value'),
         variant: 'destructive',
       })
       throw error

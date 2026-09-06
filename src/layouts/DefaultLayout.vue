@@ -5,10 +5,10 @@
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton as-child class="data-[slot=sidebar-menu-button]:!p-1.5">
-              <a href="#">
+              <router-link to="/dashboard">
                 <Shell class="!size-6" />
-                <span class="text-base font-semibold">Go store Inc.</span>
-              </a>
+                <span class="text-base font-semibold">Go Store</span>
+              </router-link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -17,81 +17,49 @@
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarMenu>
-            <Collapsible
-              v-for="item in data.navMain"
-              :key="item.title"
-              as-child
-              :default-open="item.isActive"
-              class="group/collapsible"
-            >
-              <SidebarMenuItem>
-                <CollapsibleTrigger as-child>
-                  <SidebarMenuButton :tooltip="item.title">
-                    <component :is="item.icon" />
-                    <router-link :to="item.url">
+            <template v-for="item in navMain" :key="item.title">
+              <Collapsible
+                v-if="item.items?.length"
+                as-child
+                :default-open="isNavActive(item)"
+                class="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger as-child>
+                    <SidebarMenuButton :tooltip="item.title" :is-active="isNavActive(item)">
+                      <component :is="item.icon" />
                       <span>{{ item.title }}</span>
-                    </router-link>
-                    <ChevronRight
-                      v-if="item.items?.length"
-                      class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
-                    />
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent v-if="item.items?.length">
-                  <SidebarMenuSub>
-                    <SidebarMenuSubItem v-for="subItem in item.items" :key="subItem.title">
-                      <SidebarMenuSubButton as-child>
-                        <router-link :to="subItem.url">
-                          <span>{{ subItem.title }}</span>
-                        </router-link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
+                      <ChevronRight
+                        class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                      />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem v-for="subItem in item.items" :key="subItem.title">
+                        <SidebarMenuSubButton as-child :is-active="isPathActive(subItem.url)">
+                          <router-link :to="subItem.url">
+                            <span>{{ subItem.title }}</span>
+                          </router-link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+              <SidebarMenuItem v-else>
+                <SidebarMenuButton
+                  as-child
+                  :tooltip="item.title"
+                  :is-active="isPathActive(item.url)"
+                >
+                  <router-link :to="item.url">
+                    <component :is="item.icon" />
+                    <span>{{ item.title }}</span>
+                  </router-link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
-            </Collapsible>
-          </SidebarMenu>
-        </SidebarGroup>
-        <SidebarGroup class="group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel>Projects</SidebarGroupLabel>
-          <SidebarMenu>
-            <SidebarMenuItem v-for="item in data.projects" :key="item.name">
-              <SidebarMenuButton as-child>
-                <a :href="item.url">
-                  <component :is="item.icon" />
-                  <span>{{ item.name }}</span>
-                </a>
-              </SidebarMenuButton>
-              <DropdownMenu>
-                <DropdownMenuTrigger as-child>
-                  <SidebarMenuAction show-on-hover>
-                    <MoreHorizontal />
-                    <span class="sr-only">More</span>
-                  </SidebarMenuAction>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-48 rounded-lg" side="bottom" align="end">
-                  <DropdownMenuItem>
-                    <Folder class="text-muted-foreground" />
-                    <span>View Project</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Forward class="text-muted-foreground" />
-                    <span>Share Project</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Trash2 class="text-muted-foreground" />
-                    <span>Delete Project</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton class="text-sidebar-foreground/70">
-                <MoreHorizontal class="text-sidebar-foreground/70" />
-                <span>More</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            </template>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
@@ -105,11 +73,10 @@
                   class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar class="h-8 w-8 rounded-lg">
-                    <AvatarFallback class="rounded-lg"> CN </AvatarFallback>
+                    <AvatarFallback class="rounded-lg">{{ userInitials }}</AvatarFallback>
                   </Avatar>
                   <div class="grid flex-1 text-left text-sm leading-tight">
-                    <!--                    <span class="truncate font-semibold">{{ user.name }}</span>-->
-                    <span class="truncate text-xs">{{ user.email }}</span>
+                    <span class="truncate text-xs">{{ user?.email }}</span>
                   </div>
                   <ChevronsUpDown class="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -123,36 +90,13 @@
                 <DropdownMenuLabel class="p-0 font-normal">
                   <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <Avatar class="h-8 w-8 rounded-lg">
-                      <AvatarFallback class="rounded-lg"> CN </AvatarFallback>
+                      <AvatarFallback class="rounded-lg">{{ userInitials }}</AvatarFallback>
                     </Avatar>
                     <div class="grid flex-1 text-left text-sm leading-tight">
-                      <!--                      <span class="truncate font-semibold">{{ user.name }}</span>-->
-                      <span class="truncate text-xs">{{ user.email }}</span>
+                      <span class="truncate text-xs">{{ user?.email }}</span>
                     </div>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <Sparkles />
-                    Upgrade to Pro
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <BadgeCheck />
-                    Account
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <CreditCard />
-                    Billing
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Bell />
-                    Notifications
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem @click="logout">
                   <LogOut />
@@ -199,28 +143,16 @@
 
 <script setup lang="ts">
 import {
-  BadgeCheck,
-  Bell,
-  Bot,
   ChevronRight,
   ChevronsUpDown,
-  CreditCard,
-  Folder,
-  Forward,
-  Frame,
+  FolderTree,
   Library,
   LogOut,
-  Map,
-  MoreHorizontal,
   Package,
-  PieChart,
-  Settings2,
   Share2,
   Shell,
   ShoppingBag,
-  Sparkles,
   SquareTerminal,
-  Trash2,
 } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 
@@ -240,7 +172,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -256,7 +187,6 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -268,129 +198,51 @@ import {
 } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth'
 
-// This is sample data.
-const data = {
-  user: {
-    name: 'user',
-    email: 'm@example.com',
-    avatar: '/avatars/shadcn.jpg',
-  },
-  navMain: [
-    {
-      title: 'Dashboard',
-      url: '/dashboard',
-      icon: SquareTerminal,
-      isActive: true,
-    },
-    {
-      title: 'Orders',
-      url: '/order',
-      icon: ShoppingBag,
-    },
-    {
-      title: 'Categories',
-      url: '#',
-      icon: Bot,
-      items: [
-        {
-          title: 'Categories',
-          url: '/category',
-        },
-      ],
-    },
-    {
-      title: 'Collections',
-      url: '#',
-      icon: Library,
-      items: [
-        {
-          title: 'Collections',
-          url: '/collection',
-        },
-      ],
-    },
-    {
-      title: 'Products',
-      url: '#',
-      icon: Package,
-      items: [
-        {
-          title: 'Product',
-          url: '/product',
-        },
-        {
-          title: 'Get Started',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Attributes',
-      utl: '#',
-      icon: Share2,
-      items: [
-        {
-          title: 'Attribute Group',
-          url: '/attribute-group',
-        },
-        {
-          title: 'Attributes',
-          url: '/attribute',
-        },
-      ],
-    },
-    {
-      title: 'Settings',
-      url: '#',
-      icon: Settings2,
-      items: [
-        {
-          title: 'General',
-          url: '#',
-        },
-        {
-          title: 'Team',
-          url: '#',
-        },
-        {
-          title: 'Billing',
-          url: '#',
-        },
-        {
-          title: 'Limits',
-          url: '#',
-        },
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: 'Design Engineering',
-      url: '#',
-      icon: Frame,
-    },
-    {
-      name: 'Sales & Marketing',
-      url: '#',
-      icon: PieChart,
-    },
-    {
-      name: 'Travel',
-      url: '#',
-      icon: Map,
-    },
-  ],
+type NavChild = { title: string; url: string }
+type NavItem = {
+  title: string
+  url: string
+  icon: typeof SquareTerminal
+  items?: NavChild[]
 }
+
+const navMain: NavItem[] = [
+  { title: 'Обзор', url: '/dashboard', icon: SquareTerminal },
+  { title: 'Orders', url: '/order', icon: ShoppingBag },
+  { title: 'Categories', url: '/category', icon: FolderTree },
+  { title: 'Collections', url: '/collection', icon: Library },
+  { title: 'Products', url: '/product', icon: Package },
+  {
+    title: 'Attributes',
+    url: '/attribute',
+    icon: Share2,
+    items: [
+      { title: 'Attribute Group', url: '/attribute-group' },
+      { title: 'Attributes', url: '/attribute' },
+    ],
+  },
+]
 
 const { user } = storeToRefs(useAuthStore())
 const { logout } = useAuthStore()
 const route = useRoute()
 
+const userInitials = computed(() => {
+  const local = user.value?.email?.split('@')[0] ?? ''
+  if (local.length >= 2) return local.slice(0, 2).toUpperCase()
+  return (local[0] ?? '?').toUpperCase()
+})
+
+const isPathActive = (url: string) => route.path === url || route.path.startsWith(`${url}/`)
+
+const isNavActive = (item: NavItem) =>
+  item.items?.some((sub) => isPathActive(sub.url)) ?? isPathActive(item.url)
+
 const breadcrumbs = computed(() => {
   const matchedRoutes = route.matched
-  return matchedRoutes.map((route) => ({
-    name: route.meta.breadcrumb || route.name,
-    path: route.path,
+  return matchedRoutes.map((matched) => ({
+    name: matched.meta.breadcrumb || matched.name,
+    path: matched.path,
   }))
 })
 </script>

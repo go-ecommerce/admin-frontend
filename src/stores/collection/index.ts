@@ -4,6 +4,7 @@ import { ref } from 'vue'
 
 import { useToast } from '@/components/ui/toast'
 import CollectionService from '@/services/CollectionService'
+import { extractApiErrorMessage } from '@/utils/apiError'
 import type { ICollectionRequest, ICollectionResponse } from '@/utils/types/api/apiGo.ts'
 import type {
   CollectionResponse,
@@ -26,7 +27,7 @@ export const useCollectionStore = defineStore('collection', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching collections',
-        description: error.message || 'An error occurred while fetching collections',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching collections'),
         variant: 'destructive',
       })
       throw error
@@ -42,7 +43,7 @@ export const useCollectionStore = defineStore('collection', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching collection ',
-        description: error.message || 'An error occurred while fetching collection',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching collection'),
         variant: 'destructive',
       })
       throw error
@@ -59,7 +60,7 @@ export const useCollectionStore = defineStore('collection', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching collection',
-        description: error.message || 'An error occurred while fetching collection',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching collection'),
         variant: 'destructive',
       })
       throw error
@@ -78,8 +79,8 @@ export const useCollectionStore = defineStore('collection', () => {
       })
     } catch (error: any) {
       toast({
-        title: 'Error creating category',
-        description: error.message || 'An error occurred while creating the category',
+        title: 'Error creating collection',
+        description: extractApiErrorMessage(error, 'An error occurred while creating the collection'),
         variant: 'destructive',
       })
       throw error
@@ -104,7 +105,7 @@ export const useCollectionStore = defineStore('collection', () => {
     } catch (error: any) {
       toast({
         title: 'Error updating collection',
-        description: error.message || 'An error occurred while updating the collection',
+        description: extractApiErrorMessage(error, 'An error occurred while updating the collection'),
         variant: 'destructive',
       })
       throw error

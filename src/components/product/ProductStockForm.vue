@@ -82,7 +82,7 @@ watch(
           <Label>Stock status</Label>
           <Select v-model="productStockStatus">
             <SelectTrigger>
-              <SelectValue placeholder="Select a fruit" />
+              <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>

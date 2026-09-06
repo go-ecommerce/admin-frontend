@@ -1,11 +1,9 @@
-import type {
-  RouteRecordSingleView,
-} from 'vue-router'
+import type { RouteRecordRaw } from 'vue-router'
 
 import { APP_LAYOUT } from '@/layouts'
 import auth from '@/router/middlewares/auth'
 
-export const dashboard: RouteRecordSingleView[] = [
+export const dashboard: RouteRecordRaw[] = [
   {
     path: '/dashboard',
     name: 'dashboard',
@@ -14,7 +12,7 @@ export const dashboard: RouteRecordSingleView[] = [
       layout: APP_LAYOUT.DEFAULT,
       middleware: [auth],
       breadcrumb: {
-        title: 'Dashboard',
+        title: 'Обзор',
         name: 'dashboard',
       },
     },
@@ -22,7 +20,6 @@ export const dashboard: RouteRecordSingleView[] = [
   {
     path: '/',
     name: 'home',
-    component: () => import('@/views/home/HomeView.vue'),
-    meta: { layout: APP_LAYOUT.DEFAULT, middleware: [auth] },
+    redirect: { name: 'dashboard' },
   },
 ]

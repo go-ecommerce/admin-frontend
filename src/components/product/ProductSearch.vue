@@ -46,9 +46,8 @@ watchDebounced(
       searchResults.value = results.filter(
         (product) => !selectedProducts.value.find((s) => s.id === product.id),
       )
-    } catch (e) {
+    } catch {
       searchResults.value = []
-      console.error(e)
     } finally {
       loading.value = false
     }

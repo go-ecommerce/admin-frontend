@@ -13,6 +13,7 @@ import { FileUpload, FileUploadGrid } from '@/components/ui/file-upload'
 import { useToast } from '@/components/ui/toast/use-toast'
 import MediaService from '@/services/MediaService'
 import { useCategoryStore } from '@/stores/category'
+import { extractApiErrorMessage } from '@/utils/apiError'
 import type { MediumResponse, UpdateCategoryRequest } from '@/utils/types/api/generatedApiGo'
 
 // Инициализация хранилища, роутера и toast
@@ -40,7 +41,7 @@ const loadCategory = async (uuid: string) => {
     } catch (error: any) {
       toast({
         title: 'Ошибка загрузки категории',
-        description: error.message || 'Не удалось загрузить данные категории',
+        description: extractApiErrorMessage(error, 'Не удалось загрузить данные категории'),
         variant: 'destructive',
       })
     }
@@ -118,7 +119,7 @@ const updateWithUpload = async () => {
   } catch (error: any) {
     toast({
       title: 'Ошибка обновления категории',
-      description: error.message || 'Не удалось обновить категорию',
+      description: extractApiErrorMessage(error, 'Не удалось обновить категорию'),
       variant: 'destructive',
     })
   }

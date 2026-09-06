@@ -57,8 +57,8 @@ const saveAll = async () => {
   try {
     await createCollection(collectionInfo.value)
     await router.push({ name: 'collections' })
-  } catch (error) {
-    console.error(error)
+  } catch {
+    // store already shows a toast
   }
 }
 </script>

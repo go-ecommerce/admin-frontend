@@ -35,9 +35,8 @@ watchDebounced(
         page_size: 20,
       })
       attributes.value = response.items || []
-    } catch (e) {
+    } catch {
       attributes.value = []
-      console.error(e)
     } finally {
       loading.value = false
     }
@@ -46,9 +45,6 @@ watchDebounced(
 )
 
 const onAttributeSelect = (selected: any): void => {
-  console.log('AttributeSearch - onAttributeSelect called', selected)
-  console.log('AttributeSearch - selected.detail', selected.detail)
-  console.log('AttributeSearch - selected.detail.value', selected.detail?.value)
   emit('select', selected.detail.value)
   open.value = false
   searchQuery.value = ''

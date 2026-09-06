@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { DotsHorizontalIcon } from '@radix-icons/vue'
 import type { Row } from '@tanstack/vue-table'
-import { ref } from 'vue'
+import { computed, ref, useAttrs } from 'vue'
 
 import {
   AlertDialog,
@@ -35,6 +35,8 @@ const emit = defineEmits<{
   delete: [id: string]
 }>()
 
+const attrs = useAttrs()
+const canDelete = computed(() => typeof attrs.onDelete === 'function')
 const isDeleteDialogOpen = ref(false)
 
 const handleDelete = () => {
@@ -57,15 +59,17 @@ const handleDelete = () => {
           <DropdownMenuItem>Edit</DropdownMenuItem>
         </RouterLink>
 
-        <DropdownMenuSeparator />
-        <DropdownMenuItem @click="isDeleteDialogOpen = true">
-          Delete
-          <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-        </DropdownMenuItem>
+        <template v-if="canDelete">
+          <DropdownMenuSeparator />
+          <DropdownMenuItem @click="isDeleteDialogOpen = true">
+            Delete
+            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </template>
       </DropdownMenuContent>
     </DropdownMenu>
 
-    <AlertDialog v-model:open="isDeleteDialogOpen">
+    <AlertDialog v-if="canDelete" v-model:open="isDeleteDialogOpen">
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure?</AlertDialogTitle>

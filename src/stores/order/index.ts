@@ -4,7 +4,7 @@ import { ref } from 'vue'
 
 import { useToast } from '@/components/ui/toast'
 import OrderService from '@/services/OrderService'
-import { extractApiErrorMessage } from '@/utils/order'
+import { extractApiErrorMessage } from '@/utils/apiError'
 import type { IOrderRequest, IOrderResponse } from '@/utils/types/api/apiGo'
 import type { AdminOrderResponse, UpdateOrderStatusRequest } from '@/utils/types/api/generatedApiGo'
 

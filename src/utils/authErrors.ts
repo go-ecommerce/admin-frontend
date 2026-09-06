@@ -1,25 +1,9 @@
+import { collectApiErrorMessages } from '@/utils/apiError'
+
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   'invalid credentials': 'Неверный email или пароль',
   'invalid email or password': 'Неверный email или пароль',
   'account is banned': 'Аккаунт заблокирован',
-}
-
-function collectMessages(error: unknown): string[] {
-  const err = error as {
-    data?: {
-      message?: string
-      errors?: { message?: string }[]
-    }
-    message?: string
-    statusMessage?: string
-  }
-
-  return [
-    err.data?.message,
-    ...(err.data?.errors || []).map((item) => item.message),
-    err.message,
-    err.statusMessage,
-  ].filter((item): item is string => Boolean(item))
 }
 
 export function translateAuthError(error: unknown): string {
@@ -27,7 +11,7 @@ export function translateAuthError(error: unknown): string {
     (error as { status?: number; statusCode?: number }).status ||
     (error as { statusCode?: number }).statusCode
 
-  for (const message of collectMessages(error)) {
+  for (const message of collectApiErrorMessages(error)) {
     const normalized = message.trim().toLowerCase()
     const translated =
       AUTH_ERROR_MESSAGES[normalized] ||

@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { useCollectionStore } from '@/stores/collection'
+import { extractApiErrorMessage } from '@/utils/apiError'
 import type { UpdateCollectionRequest, VariantCardResponse } from '@/utils/types/api/generatedApiGo'
 
 const collectionStore = useCollectionStore()
@@ -54,7 +55,7 @@ onMounted(async () => {
   } catch (error: any) {
     toast({
       title: 'Ошибка загрузки коллекции',
-      description: error.message || 'Не удалось загрузить данные коллекции',
+      description: extractApiErrorMessage(error, 'Не удалось загрузить данные коллекции'),
       variant: 'destructive',
     })
   }
@@ -75,7 +76,7 @@ const updateWithUpload = async () => {
   } catch (error: any) {
     toast({
       title: 'Ошибка обновления коллекции',
-      description: error.message || 'Не удалось обновить коллекцию',
+      description: extractApiErrorMessage(error, 'Не удалось обновить коллекцию'),
       variant: 'destructive',
     })
   }

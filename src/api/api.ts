@@ -3,6 +3,7 @@ import { type $Fetch, $fetch, type FetchOptions } from 'ofetch'
 import { CustomError } from '@/api/errors/customError'
 import type { Token } from '@/api/types'
 import { useErrorStore } from '@/stores/error'
+import { extractApiErrorMessage } from '@/utils/apiError'
 import { USER } from '@/utils/constants/user'
 
 const baseConfig: FetchOptions = {
@@ -12,10 +13,12 @@ const baseConfig: FetchOptions = {
   },
   async onResponseError({ request, response }) {
     if (response?.status === 422) {
-      const message = response._data.message
-      useErrorStore().setErrors(response._data.errors)
-      console.error(response._data)
-      throw new CustomError(message, response.status)
+      const body = response._data
+      useErrorStore().setErrors(body?.errors)
+      throw new CustomError(
+        extractApiErrorMessage({ data: body }, 'Ошибка валидации'),
+        response.status,
+      )
     }
 
     if (response?.status === 401) {

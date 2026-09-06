@@ -4,6 +4,7 @@ import { ref } from 'vue'
 
 import { useToast } from '@/components/ui/toast'
 import ProductService from '@/services/ProductService'
+import { extractApiErrorMessage } from '@/utils/apiError'
 import type {
   IProductRequest,
   IProductResponse,
@@ -53,7 +54,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching products.',
-        description: error.message || 'An error occurred while fetching products.',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching products.'),
         variant: 'destructive',
       })
       throw error
@@ -78,7 +79,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching products.',
-        description: error.message || 'An error occurred while fetching products.',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching products.'),
         variant: 'destructive',
       })
       throw error
@@ -94,7 +95,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching products.',
-        description: error.message || 'An error occurred while fetching products.',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching products.'),
         variant: 'destructive',
       })
       throw error
@@ -112,7 +113,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching products.',
-        description: error.message || 'An error occurred while fetching products.',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching products.'),
         variant: 'destructive',
       })
       throw error
@@ -133,7 +134,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error creating product',
-        description: error.message || 'An error occurred while creating product.',
+        description: extractApiErrorMessage(error, 'An error occurred while creating product.'),
         variant: 'destructive',
       })
       throw error
@@ -157,7 +158,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error updating product',
-        description: error.message || 'An error occurred while updating product.',
+        description: extractApiErrorMessage(error, 'An error occurred while updating product.'),
         variant: 'destructive',
       })
       throw error
@@ -172,7 +173,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching related products',
-        description: error.message || 'An error occurred while fetching related products.',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching related products.'),
         variant: 'destructive',
       })
       throw error
@@ -190,7 +191,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error syncing related products',
-        description: error.message || 'An error occurred while syncing related products.',
+        description: extractApiErrorMessage(error, 'An error occurred while syncing related products.'),
         variant: 'destructive',
       })
       throw error
@@ -203,7 +204,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching product attributes',
-        description: error.message || 'An error occurred while fetching product attributes.',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching product attributes.'),
         variant: 'destructive',
       })
       throw error
@@ -224,7 +225,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error syncing product attributes',
-        description: error.message || 'An error occurred while syncing product attributes.',
+        description: extractApiErrorMessage(error, 'An error occurred while syncing product attributes.'),
         variant: 'destructive',
       })
       throw error
@@ -238,7 +239,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching variants',
-        description: error.message || 'An error occurred while fetching variants.',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching variants.'),
         variant: 'destructive',
       })
       throw error
@@ -253,7 +254,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error fetching variants',
-        description: error.message || 'An error occurred while fetching variants.',
+        description: extractApiErrorMessage(error, 'An error occurred while fetching variants.'),
         variant: 'destructive',
       })
       throw error
@@ -272,7 +273,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error creating variant',
-        description: error.message || 'An error occurred while creating variant.',
+        description: extractApiErrorMessage(error, 'An error occurred while creating variant.'),
         variant: 'destructive',
       })
       throw error
@@ -292,7 +293,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error updating variant',
-        description: error.message || 'An error occurred while updating variant.',
+        description: extractApiErrorMessage(error, 'An error occurred while updating variant.'),
         variant: 'destructive',
       })
       throw error
@@ -307,7 +308,7 @@ export const useProductStore = defineStore('product', () => {
     } catch (error: any) {
       toast({
         title: 'Error deleting variant',
-        description: error.message || 'An error occurred while deleting variant.',
+        description: extractApiErrorMessage(error, 'An error occurred while deleting variant.'),
         variant: 'destructive',
       })
       throw error

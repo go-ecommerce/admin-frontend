@@ -40,8 +40,8 @@ watch(
       try {
         const group = await AttributeService.getApiAttributeGroupById(newValue)
         selectedAttributeGroup.value = group
-      } catch (e) {
-        console.error('Failed to load attribute group:', e)
+      } catch {
+        selectedAttributeGroup.value = undefined
       }
     } else if (!newValue) {
       selectedAttributeGroup.value = undefined
@@ -66,9 +66,8 @@ watchDebounced(
         page_size: 20,
       })
       attributeGroups.value = result?.items || []
-    } catch (e) {
+    } catch {
       attributeGroups.value = []
-      console.error('Error loading attribute groups:', e)
     } finally {
       loading.value = false
     }

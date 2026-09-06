@@ -62,8 +62,8 @@ const saveAll = async () => {
     } else {
       await router.push({ name: 'attribute-group' })
     }
-  } catch (error) {
-    console.error(error)
+  } catch {
+    // store already shows a toast
   }
 }
 </script>

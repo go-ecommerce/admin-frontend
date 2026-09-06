@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia'
 
+import { normalizeFieldErrors } from '@/utils/apiError'
+
 export const useErrorStore = defineStore('error', {
   state: () => {
     return {
-      errors: {} as Record<string, any>,
+      errors: {} as Record<string, string>,
     }
   },
   getters: {
@@ -18,10 +20,10 @@ export const useErrorStore = defineStore('error', {
     resetError() {
       this.errors = {}
     },
-    setErrors(errors: Record<string, { field: string; message: string }>) {
-      Object.entries(errors).forEach(([key, value]) => {
-        this.errors[value.field] = value.message
-      })
+    setErrors(errors: unknown) {
+      this.errors = normalizeFieldErrors(
+        errors as Parameters<typeof normalizeFieldErrors>[0],
+      )
     },
     clearError(name: string) {
       if (this.errors[name]) {
