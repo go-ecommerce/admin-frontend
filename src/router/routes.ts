@@ -7,11 +7,13 @@ import { collection } from '@/router/modules/collection.ts'
 import { dashboard } from '@/router/modules/dashboard.ts'
 import { order } from '@/router/modules/order.ts'
 import { product } from '@/router/modules/product.ts'
+import { review } from '@/router/modules/review.ts'
 
 export const routes: RouteRecordRaw[] = [
   ...auth,
   ...dashboard,
   ...order,
+  ...review,
   ...category,
   ...collection,
   ...product,

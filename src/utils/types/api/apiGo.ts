@@ -1,5 +1,6 @@
 import type {
   AdminOrderResponse,
+  AdminProductReviewResponse,
   AttributeGroupResponse,
   AttributeResponse,
   AttributeValueResponse,
@@ -83,6 +84,21 @@ export interface IOrderRequest {
 
 export interface IOrderResponse {
   items: AdminOrderResponse[]
+  pagination: IPagination
+}
+
+export interface IProductReviewRequest {
+  page: number
+  page_size: number
+  status?: string
+  sort_by_rating?: 'asc' | 'desc'
+  user_id?: string
+  variant_id?: string
+  with_deleted?: boolean
+}
+
+export interface IProductReviewResponse {
+  items: AdminProductReviewResponse[]
   pagination: IPagination
 }
 

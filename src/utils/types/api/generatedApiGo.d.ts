@@ -63,6 +63,20 @@ export interface AdminOrderResponse {
   user_id?: string;
 }
 
+export interface AdminProductReviewResponse {
+  body?: string;
+  created_at?: string;
+  deleted_at?: string;
+  id?: string;
+  order_id?: string;
+  rating?: number;
+  status?: string;
+  title?: string;
+  updated_at?: string;
+  user_id?: string;
+  variant_id?: string;
+}
+
 export interface Attribute {
   attribute_group_id?: UuidNullUUID;
   created_at?: PgtypeTimestamp;
@@ -573,6 +587,12 @@ export interface JSONResponseAdminOrderResponse {
   message?: string;
 }
 
+export interface JSONResponseAdminProductReviewResponse {
+  code?: number;
+  data?: AdminProductReviewResponse;
+  message?: string;
+}
+
 export interface JSONResponseAttributeGroupResponse {
   code?: number;
   data?: AttributeGroupResponse;
@@ -690,6 +710,12 @@ export interface JSONResponseProductWithMediumResponse {
 export interface JSONResponseResponseWithFullPaginationAdminOrderResponse {
   code?: number;
   data?: ResponseWithFullPaginationAdminOrderResponse;
+  message?: string;
+}
+
+export interface JSONResponseResponseWithFullPaginationAdminProductReviewResponse {
+  code?: number;
+  data?: ResponseWithFullPaginationAdminProductReviewResponse;
   message?: string;
 }
 
@@ -828,6 +854,12 @@ export interface JSONResponseArrayCityResponse {
 export interface JSONResponseArrayProductVariantResponse {
   code?: number;
   data?: ProductVariantResponse[];
+  message?: string;
+}
+
+export interface JSONResponseArraySitemapEntry {
+  code?: number;
+  data?: SitemapEntry[];
   message?: string;
 }
 
@@ -1014,6 +1046,11 @@ export interface ResponseWithFullPaginationAdminOrderResponse {
   pagination?: FullPagingData;
 }
 
+export interface ResponseWithFullPaginationAdminProductReviewResponse {
+  items?: AdminProductReviewResponse[];
+  pagination?: FullPagingData;
+}
+
 export interface ResponseWithFullPaginationAttribute {
   items?: Attribute[];
   pagination?: FullPagingData;
@@ -1070,6 +1107,11 @@ export interface SendCodeRequest {
 
 export interface SendCodeResponse {
   sent?: boolean;
+}
+
+export interface SitemapEntry {
+  slug?: string;
+  updated_at?: string;
 }
 
 export interface SyncRelatedProductRequest {
@@ -1214,6 +1256,10 @@ export interface UpdateProductRequest {
   upc?: string;
   weight?: number;
   width?: number;
+}
+
+export interface UpdateProductReviewStatusRequest {
+  status: "PENDING" | "APPROVED" | "REJECTED";
 }
 
 export interface UpdateProductVariantRequest {

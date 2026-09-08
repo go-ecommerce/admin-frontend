@@ -148,6 +148,7 @@ import {
   FolderTree,
   Library,
   LogOut,
+  MessageSquareText,
   Package,
   Share2,
   Shell,
@@ -209,6 +210,7 @@ type NavItem = {
 const navMain: NavItem[] = [
   { title: 'Обзор', url: '/dashboard', icon: SquareTerminal },
   { title: 'Orders', url: '/order', icon: ShoppingBag },
+  { title: 'Отзывы', url: '/product-review', icon: MessageSquareText },
   { title: 'Categories', url: '/category', icon: FolderTree },
   { title: 'Collections', url: '/collection', icon: Library },
   { title: 'Products', url: '/product', icon: Package },
