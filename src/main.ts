@@ -1,4 +1,5 @@
 import { createPinia } from 'pinia'
+import { createYmaps } from 'vue-yandex-maps'
 
 import { createApp } from 'vue'
 
@@ -12,5 +13,10 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+app.use(
+  createYmaps({
+    apikey: import.meta.env.VITE_YANDEX_MAPS_API_KEY || '',
+  }),
+)
 
 intiRequests().then(() => app.mount('#app'))

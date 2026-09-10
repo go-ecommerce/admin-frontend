@@ -57,24 +57,38 @@ export interface AdminOrderResponse {
   phone?: string;
   shipping?: OrderShippingResponse;
   shipping_total?: number;
+  source?: string;
   status?: string;
   subtotal?: number;
   tax_total?: number;
   user_id?: string;
 }
 
-export interface AdminProductReviewResponse {
-  body?: string;
-  created_at?: string;
-  deleted_at?: string;
-  id?: string;
-  order_id?: string;
-  rating?: number;
-  status?: string;
-  title?: string;
-  updated_at?: string;
-  user_id?: string;
-  variant_id?: string;
+export interface AdminUpdateOrderRequest {
+  /** @maxLength 2000 */
+  comment?: string;
+  /** @maxLength 32 */
+  delivery_method_code?: string;
+  /** @maxLength 255 */
+  email?: string;
+  /** @maxLength 32 */
+  payment_method?: string;
+  /** @maxLength 32 */
+  phone?: string;
+  /** @maxLength 512 */
+  ship_address?: string;
+  ship_city_id?: string;
+  /** @maxLength 255 */
+  ship_city_name?: string;
+  /** @maxLength 64 */
+  ship_point_code?: string;
+  /** @maxLength 16 */
+  ship_postcode?: string;
+  ship_provider?: "cdek" | "yandex_delivery" | "pochta";
+  /** @maxLength 255 */
+  ship_recipient?: string;
+  /** @maxLength 64 */
+  ship_tariff_code?: string;
 }
 
 export interface Attribute {
@@ -171,33 +185,17 @@ export interface BreadcrumbResponse {
   slug?: string;
 }
 
-export interface CDEKDeliveryPointResponse {
-  address?: string;
-  address_full?: string;
-  allowed_cod?: boolean;
-  city?: string;
-  city_code?: number;
-  code?: string;
-  country_code?: string;
-  email?: string;
-  have_cash?: boolean;
-  have_cashless?: boolean;
-  is_dressing_room?: boolean;
-  is_handout?: boolean;
-  is_reception?: boolean;
-  latitude?: number;
-  longitude?: number;
-  name?: string;
-  note?: string;
-  phones?: string[];
-  postal_code?: string;
-  region?: string;
-  region_code?: number;
-  take_only?: boolean;
-  type?: string;
-  weight_max?: number;
-  weight_min?: number;
-  work_time?: string;
+export interface CalculateRatesRequest {
+  declared_value?: string;
+  delivery_type?: "pickup" | "courier";
+  from_postal_code?: string;
+  height_cm?: string;
+  length_cm?: string;
+  /** @maxLength 64 */
+  to_point_code?: string;
+  to_postal_code?: string;
+  weight_kg?: string;
+  width_cm?: string;
 }
 
 export interface CartItemResponse {
@@ -268,6 +266,32 @@ export interface CategoryTreeResponse {
   id?: string;
   name?: string;
   slug?: string;
+}
+
+export interface CheckoutPreviewRequest {
+  /**
+   * delivery_method_code from GET /v1/delivery/methods (preferred).
+   * @maxLength 32
+   */
+  delivery_method_code?: string;
+  /** @maxLength 64 */
+  ship_point_code?: string;
+  /** @maxLength 16 */
+  ship_postcode?: string;
+  ship_provider?: "cdek" | "yandex_delivery" | "pochta";
+  /** @maxLength 64 */
+  ship_tariff_code?: string;
+}
+
+export interface CheckoutPreviewResponse {
+  currency?: string;
+  discount_total?: number;
+  grand_total?: number;
+  item_count?: number;
+  shipping?: OrderShippingResponse;
+  shipping_total?: number;
+  subtotal?: number;
+  tax_total?: number;
 }
 
 export interface CityResponse {
@@ -439,6 +463,15 @@ export interface CreateManufacturerRequest {
 export interface CreateOrderRequest {
   /** @maxLength 2000 */
   comment?: string;
+  /**
+   * Delivery choice. delivery_method_code (from GET /v1/delivery/methods) is
+   * resolved server-side to a carrier + tariff — the frontend never sends
+   * tariff codes. ship_provider + ship_tariff_code are the raw fallback
+   * (ship_tariff_code must be paired with ship_provider). ship_point_code is
+   * the chosen pickup point; for courier methods send ship_postcode instead.
+   * @maxLength 32
+   */
+  delivery_method_code?: string;
   email?: string;
   /**
    * ExpectedTotal, when set, must equal the server-computed grand total or the
@@ -455,10 +488,15 @@ export interface CreateOrderRequest {
   ship_city_id?: string;
   /** @maxLength 255 */
   ship_city_name: string;
+  /** @maxLength 64 */
+  ship_point_code?: string;
   /** @maxLength 16 */
   ship_postcode?: string;
+  ship_provider?: "cdek" | "yandex_delivery" | "pochta";
   /** @maxLength 255 */
   ship_recipient: string;
+  /** @maxLength 64 */
+  ship_tariff_code?: string;
   /** @maxLength 64 */
   shipping_method?: string;
 }
@@ -501,6 +539,17 @@ export interface CreateProductVariantRequest {
   name: string;
   slug: string;
   sort_order?: number;
+}
+
+export interface CreateQuickOrderRequest {
+  /** @maxLength 2000 */
+  comment?: string;
+  /** @maxLength 255 */
+  email?: string;
+  /** @maxLength 255 */
+  name: string;
+  /** @maxLength 32 */
+  phone: string;
 }
 
 export interface DashboardCatalog {
@@ -562,6 +611,46 @@ export interface DashboardRevenue {
   today?: string;
 }
 
+export interface DeliveryMethodResponse {
+  code?: string;
+  enabled?: boolean;
+  free?: boolean;
+  has_points?: boolean;
+  has_rates?: boolean;
+  /** self_pickup | pickup | courier */
+  kind?: string;
+  /** MarkupPercent is added on top of the carrier quote before rounding up. */
+  markup_percent?: number;
+  provider?: string;
+  tariff_code?: string;
+  title?: string;
+}
+
+export interface DeliveryPointResponse {
+  address?: string;
+  card_payment?: boolean;
+  cash_payment?: boolean;
+  code?: string;
+  country?: string;
+  details?: Record<string, any>;
+  email?: string;
+  latitude?: number;
+  locality?: string;
+  longitude?: number;
+  name?: string;
+  phones?: string[];
+  postal_code?: string;
+  provider?: string;
+  region?: string;
+  type?: string;
+  work_time?: string[];
+}
+
+export interface DeliveryProviderResponse {
+  code?: string;
+  enabled?: boolean;
+}
+
 export interface FullPagingData {
   last_page?: number;
   page?: number;
@@ -584,12 +673,6 @@ export interface ImageDTO {
 export interface JSONResponseAdminOrderResponse {
   code?: number;
   data?: AdminOrderResponse;
-  message?: string;
-}
-
-export interface JSONResponseAdminProductReviewResponse {
-  code?: number;
-  data?: AdminProductReviewResponse;
   message?: string;
 }
 
@@ -638,6 +721,12 @@ export interface JSONResponseCategoryFiltersResponse {
 export interface JSONResponseCategoryResponse {
   code?: number;
   data?: CategoryResponse;
+  message?: string;
+}
+
+export interface JSONResponseCheckoutPreviewResponse {
+  code?: number;
+  data?: CheckoutPreviewResponse;
   message?: string;
 }
 
@@ -713,12 +802,6 @@ export interface JSONResponseResponseWithFullPaginationAdminOrderResponse {
   message?: string;
 }
 
-export interface JSONResponseResponseWithFullPaginationAdminProductReviewResponse {
-  code?: number;
-  data?: ResponseWithFullPaginationAdminProductReviewResponse;
-  message?: string;
-}
-
 export interface JSONResponseResponseWithFullPaginationAttribute {
   code?: number;
   data?: ResponseWithFullPaginationAttribute;
@@ -740,6 +823,12 @@ export interface JSONResponseResponseWithFullPaginationCategoryResponse {
 export interface JSONResponseResponseWithFullPaginationCollection {
   code?: number;
   data?: ResponseWithFullPaginationCollection;
+  message?: string;
+}
+
+export interface JSONResponseResponseWithFullPaginationManufacturerResponse {
+  code?: number;
+  data?: ResponseWithFullPaginationManufacturerResponse;
   message?: string;
 }
 
@@ -833,12 +922,6 @@ export interface JSONResponseArrayBreadcrumbResponse {
   message?: string;
 }
 
-export interface JSONResponseArrayCDEKDeliveryPointResponse {
-  code?: number;
-  data?: CDEKDeliveryPointResponse[];
-  message?: string;
-}
-
 export interface JSONResponseArrayCategoryTreeResponse {
   code?: number;
   data?: CategoryTreeResponse[];
@@ -851,9 +934,33 @@ export interface JSONResponseArrayCityResponse {
   message?: string;
 }
 
+export interface JSONResponseArrayDeliveryMethodResponse {
+  code?: number;
+  data?: DeliveryMethodResponse[];
+  message?: string;
+}
+
+export interface JSONResponseArrayDeliveryPointResponse {
+  code?: number;
+  data?: DeliveryPointResponse[];
+  message?: string;
+}
+
+export interface JSONResponseArrayDeliveryProviderResponse {
+  code?: number;
+  data?: DeliveryProviderResponse[];
+  message?: string;
+}
+
 export interface JSONResponseArrayProductVariantResponse {
   code?: number;
   data?: ProductVariantResponse[];
+  message?: string;
+}
+
+export interface JSONResponseArrayShippingRateResponse {
+  code?: number;
+  data?: ShippingRateResponse[];
   message?: string;
 }
 
@@ -950,6 +1057,7 @@ export interface OrderResponse {
   phone?: string;
   shipping?: OrderShippingResponse;
   shipping_total?: number;
+  source?: string;
   status?: string;
   subtotal?: number;
   tax_total?: number;
@@ -959,9 +1067,14 @@ export interface OrderShippingResponse {
   address?: string;
   city_id?: string;
   city_name?: string;
+  max_days?: number;
   method?: string;
+  min_days?: number;
+  point_code?: string;
   postcode?: string;
+  provider?: string;
   recipient?: string;
+  tariff_code?: string;
 }
 
 export interface ProductResponse {
@@ -1046,11 +1159,6 @@ export interface ResponseWithFullPaginationAdminOrderResponse {
   pagination?: FullPagingData;
 }
 
-export interface ResponseWithFullPaginationAdminProductReviewResponse {
-  items?: AdminProductReviewResponse[];
-  pagination?: FullPagingData;
-}
-
 export interface ResponseWithFullPaginationAttribute {
   items?: Attribute[];
   pagination?: FullPagingData;
@@ -1068,6 +1176,11 @@ export interface ResponseWithFullPaginationCategoryResponse {
 
 export interface ResponseWithFullPaginationCollection {
   items?: Collection[];
+  pagination?: FullPagingData;
+}
+
+export interface ResponseWithFullPaginationManufacturerResponse {
+  items?: ManufacturerResponse[];
   pagination?: FullPagingData;
 }
 
@@ -1107,6 +1220,18 @@ export interface SendCodeRequest {
 
 export interface SendCodeResponse {
   sent?: boolean;
+}
+
+export interface ShippingRateResponse {
+  cost?: number;
+  currency?: string;
+  delivery_type?: string;
+  details?: Record<string, any>;
+  max_days?: number;
+  min_days?: number;
+  provider?: string;
+  tariff_code?: string;
+  tariff_name?: string;
 }
 
 export interface SitemapEntry {

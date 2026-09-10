@@ -6,7 +6,11 @@ import { useToast } from '@/components/ui/toast'
 import OrderService from '@/services/OrderService'
 import { extractApiErrorMessage } from '@/utils/apiError'
 import type { IOrderRequest, IOrderResponse } from '@/utils/types/api/apiGo'
-import type { AdminOrderResponse, UpdateOrderStatusRequest } from '@/utils/types/api/generatedApiGo'
+import type {
+  AdminOrderResponse,
+  AdminUpdateOrderRequest,
+  UpdateOrderStatusRequest,
+} from '@/utils/types/api/generatedApiGo'
 
 const defaultPagination = { page: 1, page_size: 10, total: 0, last_page: 1 }
 
@@ -14,6 +18,14 @@ const defaultOrders: IOrderResponse = {
   items: [],
   pagination: { ...defaultPagination },
 }
+
+const applyUpdatedOrder = (
+  orders: IOrderResponse,
+  updated: AdminOrderResponse,
+): IOrderResponse => ({
+  ...orders,
+  items: orders.items.map((item) => (item.number === updated.number ? updated : item)),
+})
 
 export const useOrderStore = defineStore('order', () => {
   const isLoading = ref(false)
@@ -53,6 +65,29 @@ export const useOrderStore = defineStore('order', () => {
     }
   }
 
+  const updateOrder = async (
+    number: number,
+    payload: AdminUpdateOrderRequest,
+  ): Promise<AdminOrderResponse> => {
+    try {
+      isLoading.value = true
+      const updated = await OrderService.updateOrder(number, payload)
+      currentOrder.value = updated
+      orders.value = applyUpdatedOrder(orders.value, updated)
+      toast({ title: '✅ Заказ сохранён', variant: 'success' })
+      return updated
+    } catch (error: unknown) {
+      toast({
+        title: 'Не удалось сохранить заказ',
+        description: extractApiErrorMessage(error, 'Ошибка при редактировании заказа'),
+        variant: 'destructive',
+      })
+      throw error
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   const updateOrderStatus = async (
     number: number,
     payload: UpdateOrderStatusRequest,
@@ -61,10 +96,7 @@ export const useOrderStore = defineStore('order', () => {
       isLoading.value = true
       const updated = await OrderService.updateOrderStatus(number, payload)
       currentOrder.value = updated
-      orders.value = {
-        ...orders.value,
-        items: orders.value.items.map((item) => (item.number === updated.number ? updated : item)),
-      }
+      orders.value = applyUpdatedOrder(orders.value, updated)
       toast({ title: '✅ Статус заказа обновлён', variant: 'success' })
       return updated
     } catch (error: unknown) {
@@ -85,6 +117,7 @@ export const useOrderStore = defineStore('order', () => {
     currentOrder,
     getOrders,
     getOrderByNumber,
+    updateOrder,
     updateOrderStatus,
   }
 })

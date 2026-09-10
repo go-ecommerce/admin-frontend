@@ -1,6 +1,7 @@
 import type { UpdateOrderStatusRequest } from '@/utils/types/api/generatedApiGo'
 
 export const ORDER_STATUSES = [
+  'new',
   'pending',
   'paid',
   'processing',
@@ -12,11 +13,16 @@ export const ORDER_STATUSES = [
 
 export const PAYMENT_STATUSES = ['unpaid', 'paid', 'refunded', 'failed'] as const
 
+export const PAYMENT_METHODS = ['card', 'cash', 'invoice'] as const
+
+export const EDITABLE_ORDER_STATUSES = ['new', 'pending'] as const
+
 export type OrderStatus = (typeof ORDER_STATUSES)[number]
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number]
 export type OrderStatusTarget = UpdateOrderStatusRequest['status']
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
+  new: 'Новый',
   pending: 'Ожидает обработки',
   paid: 'Оплачен',
   processing: 'В обработке',
@@ -39,14 +45,22 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash: 'При получении',
 }
 
+const ORDER_SOURCE_LABELS: Record<string, string> = {
+  checkout: 'Оформление',
+  quick: 'Быстрый заказ',
+}
+
 const SHIPPING_METHOD_LABELS: Record<string, string> = {
   pickup: 'Самовывоз',
   cdek: 'СДЭК',
   post: 'Почта России',
+  pochta: 'Почта России',
   yandex: 'Яндекс Доставка',
+  yandex_delivery: 'Яндекс Доставка',
 }
 
 const ORDER_STATUS_CLASS: Record<string, string> = {
+  new: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
   pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   paid: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   processing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -64,6 +78,8 @@ const PAYMENT_STATUS_CLASS: Record<string, string> = {
 }
 
 const ALLOWED_TRANSITIONS: Record<string, OrderStatusTarget[]> = {
+  // new -> pending happens via PATCH /admin/orders/{number} (edit), not status
+  new: ['cancelled'],
   pending: ['paid', 'cancelled'],
   paid: ['processing', 'cancelled', 'refunded'],
   processing: ['shipped', 'cancelled', 'refunded'],
@@ -86,6 +102,11 @@ export function paymentMethodLabel(method?: string) {
   return PAYMENT_METHOD_LABELS[method] || method
 }
 
+export function orderSourceLabel(source?: string) {
+  if (!source) return '—'
+  return ORDER_SOURCE_LABELS[source] || source
+}
+
 export function shippingMethodLabel(method?: string) {
   if (!method) return '—'
   return SHIPPING_METHOD_LABELS[method] || method
@@ -101,6 +122,10 @@ export function paymentStatusClass(status?: string) {
 
 export function nextOrderStatuses(status?: string): OrderStatusTarget[] {
   return ALLOWED_TRANSITIONS[status ?? ''] ?? []
+}
+
+export function isOrderEditable(status?: string) {
+  return (EDITABLE_ORDER_STATUSES as readonly string[]).includes(status ?? '')
 }
 
 export function formatOrderMoney(value?: number | string, currency = 'RUB') {
