@@ -1,0 +1,104 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy (e.g. v1.0.0). Empty = latest release.'
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Resolve tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TAG: ${{ inputs.tag }}
+          WORKFLOW_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          if [ -n "${INPUT_TAG:-}" ]; then
+            TAG="${INPUT_TAG}"
+          elif [ -n "${WORKFLOW_BRANCH:-}" ]; then
+            # For tag pushes, head_branch is the tag name (e.g. v1.0.0)
+            TAG="${WORKFLOW_BRANCH}"
+          else
+            TAG="$(gh api "repos/${{ github.repository }}/releases/latest" --jq .tag_name)"
+          fi
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+          echo "Deploying ${TAG}"
+
+      - name: Download release asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          ARCHIVE="go-store-admin-${TAG}.tar.gz"
+          # Brief retry: GitHub asset index can lag a second after Release finishes
+          for i in 1 2 3 4 5; do
+            if gh release download "${TAG}" \
+              --repo "${{ github.repository }}" \
+              --pattern "${ARCHIVE}"; then
+              break
+            fi
+            echo "Asset not ready, retry ${i}/5..."
+            sleep 5
+          done
+          test -f "${ARCHIVE}"
+          ls -lh "${ARCHIVE}"
+          echo "ARCHIVE=${ARCHIVE}" >> "${GITHUB_ENV}"
+
+      - name: Upload artifact to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: ${{ env.ARCHIVE }}
+          target: /tmp
+
+      - name: Unpack and switch release
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -euo pipefail
+
+            APP_DIR="${{ secrets.VPS_APP_DIR }}"
+            TAG="${{ steps.tag.outputs.tag }}"
+            ARCHIVE="/tmp/go-store-admin-${TAG}.tar.gz"
+            RELEASE_DIR="${APP_DIR}/releases/${TAG}"
+
+            if [ -z "${APP_DIR}" ]; then
+              echo "VPS_APP_DIR secret is required"
+              exit 1
+            fi
+
+            mkdir -p "${APP_DIR}/releases"
+            rm -rf "${RELEASE_DIR}"
+            mkdir -p "${RELEASE_DIR}"
+            tar -xzf "${ARCHIVE}" -C "${RELEASE_DIR}"
+            rm -f "${ARCHIVE}"
+
+            ln -sfn "${RELEASE_DIR}" "${APP_DIR}/current"
+
+            # Keep last 5 releases
+            ls -1dt "${APP_DIR}/releases"/* | tail -n +6 | xargs -r rm -rf
