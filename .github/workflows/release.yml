@@ -37,7 +37,7 @@ jobs:
           VITE_FRONTEND_URL: ${{ secrets.VITE_FRONTEND_URL }}
           VITE_FILE_STORAGE_URL: ${{ secrets.VITE_FILE_STORAGE_URL }}
           VITE_YANDEX_MAPS_API_KEY: ${{ secrets.VITE_YANDEX_MAPS_API_KEY }}
-        run: pnpm build
+        run: pnpm build-only
 
       - name: Pack artifact
         run: |
