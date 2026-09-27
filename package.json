@@ -28,6 +28,7 @@
     "eslint-plugin-vue": "^10.4.0",
     "lodash-es": "^4.17.21",
     "lucide-vue-next": "^0.539.0",
+    "md-editor-v3": "^7.0.0",
     "motion-v": "^1.7.0",
     "ofetch": "^1.4.1",
     "pinia": "^3.0.3",

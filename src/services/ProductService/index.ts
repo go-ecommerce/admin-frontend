@@ -16,6 +16,7 @@ import type {
   UpdateProductRequest,
   UpdateProductVariantRequest,
   VariantCardResponse,
+  VariantListResponse,
 } from '@/utils/types/api/generatedApiGo'
 
 export default class ProductService {
@@ -47,11 +48,26 @@ export default class ProductService {
   }
 
   public static async searchVariants(query: string): Promise<VariantCardResponse[]> {
+    const data = await ProductService.search({ q: query, page_size: 20 })
+    return data.items ?? []
+  }
+
+  public static async search(payload: {
+    q: string
+    page?: number
+    page_size?: number
+  }): Promise<VariantListResponse> {
     const { data }: any = await api.get('/search', {
-      q: query,
-      page_size: 20,
+      q: payload.q,
+      page: payload.page,
+      page_size: payload.page_size,
     })
-    return data?.items ?? []
+    return (
+      data ?? {
+        items: [],
+        pagination: { page: 1, page_size: payload.page_size ?? 10, total: 0, last_page: 1 },
+      }
+    )
   }
 
   public static async updateApiProduct(

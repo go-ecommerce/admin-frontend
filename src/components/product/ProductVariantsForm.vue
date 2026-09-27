@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/combobox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { MarkdownEditor } from '@/components/ui/markdown-editor'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/toast/use-toast'
@@ -292,11 +293,10 @@ const cancelAdd = () => {
           </div>
           <div class="space-y-1.5 sm:col-span-2">
             <Label>Описание</Label>
-            <Textarea
+            <MarkdownEditor
               class="bg-white"
               v-model="editForms[variant.id!].description"
-              placeholder="Описание варианта"
-              rows="2"
+              placeholder="Описание варианта в Markdown…"
             />
           </div>
           <div class="space-y-1.5">
@@ -540,7 +540,10 @@ const cancelAdd = () => {
         </div>
         <div class="space-y-1.5 sm:col-span-2">
           <Label>Описание</Label>
-          <Textarea v-model="addForm.description" placeholder="Описание варианта" rows="2" />
+          <MarkdownEditor
+            v-model="addForm.description"
+            placeholder="Описание варианта в Markdown…"
+          />
         </div>
         <div class="space-y-1.5">
           <Label>Главная категория</Label>
