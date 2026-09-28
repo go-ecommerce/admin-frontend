@@ -5,6 +5,17 @@ import { storeToRefs } from 'pinia'
 import { onMounted, ref } from 'vue'
 
 import ProductSearch from '@/components/product/ProductSearch.vue'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
   Combobox,
@@ -216,6 +227,17 @@ const cancelAdd = () => {
 
 <template>
   <div class="space-y-3">
+    <Button
+      v-if="!showAddForm"
+      variant="outline"
+      size="sm"
+      class="w-full"
+      @click="showAddForm = true"
+    >
+      <Plus class="h-4 w-4 mr-2" />
+      Добавить вариант
+    </Button>
+
     <!-- Existing variants -->
     <div v-for="variant in variants" :key="variant.id" class="border rounded-lg overflow-hidden">
       <!-- Collapsed row -->
@@ -237,14 +259,29 @@ const cancelAdd = () => {
         <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0" @click="startEdit(variant)">
           <Pencil class="h-4 w-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
-          @click="emit('delete', variant.id!)"
-        >
-          <Trash2 class="h-4 w-4" />
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger as-child>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
+            >
+              <Trash2 class="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Удалить вариант?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Вариант «{{ variant.name }}» будет удалён безвозвратно. Это действие нельзя отменить.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Отмена</AlertDialogCancel>
+              <AlertDialogAction @click="emit('delete', variant.id!)">Удалить</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       <!-- Expanded edit form -->
