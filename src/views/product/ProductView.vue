@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { watchDebounced } from '@vueuse/core'
-import { PlusCircle, Search, TriangleAlert, X } from 'lucide-vue-next'
+import { Search, TriangleAlert, X } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 
 import { computed, ref, watch } from 'vue'
@@ -264,12 +264,6 @@ const onTabChange = (val: string | number) => {
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="variants">Variants</TabsTrigger>
         </TabsList>
-        <div class="ml-auto flex items-center gap-2">
-          <Button size="sm" class="h-7 gap-1" @click="router.push({ name: 'product-create' })">
-            <PlusCircle class="h-3.5 w-3.5" />
-            <span class="sr-only sm:not-sr-only sm:whitespace-nowrap">Add Product</span>
-          </Button>
-        </div>
       </div>
 
       <TabsContent value="products">

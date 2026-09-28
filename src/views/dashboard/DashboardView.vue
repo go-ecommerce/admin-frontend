@@ -6,7 +6,6 @@ import {
   FolderTree,
   Library,
   Package,
-  PlusCircle,
   RefreshCw,
   ShoppingBag,
   Tags,
@@ -160,10 +159,6 @@ onMounted(() => {
         >
           <RefreshCw class="h-3.5 w-3.5" :class="{ 'animate-spin': isLoading }" />
           <span class="sr-only sm:not-sr-only sm:whitespace-nowrap">Обновить</span>
-        </Button>
-        <Button size="sm" class="h-7 gap-1" @click="router.push({ name: 'product-create' })">
-          <PlusCircle class="h-3.5 w-3.5" />
-          <span class="sr-only sm:not-sr-only sm:whitespace-nowrap">Добавить товар</span>
         </Button>
       </div>
     </div>

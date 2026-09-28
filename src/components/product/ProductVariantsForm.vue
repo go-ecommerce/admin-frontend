@@ -238,6 +238,126 @@ const cancelAdd = () => {
       Добавить вариант
     </Button>
 
+    <!-- Add new variant form -->
+    <div v-if="showAddForm" class="border rounded-lg p-4 space-y-4 bg-muted/30">
+      <div class="font-medium">Новый вариант</div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <div class="flex items-center h-6">
+            <Label>Model</Label>
+          </div>
+          <Input v-model="addForm.model" placeholder="Модель варианта" />
+        </div>
+        <div class="space-y-1.5">
+          <div class="flex items-center h-6">
+            <Label>Название</Label>
+          </div>
+          <Input v-model="addForm.name" placeholder="Название варианта" />
+        </div>
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between h-6">
+            <Label>Slug</Label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="h-6 gap-1 text-xs"
+              @click="addForm.slug = generateSlugUtil(addForm.name)"
+              :disabled="!addForm.name.trim()"
+            >
+              <Sparkles class="h-3 w-3" />
+              Generate
+            </Button>
+          </div>
+          <Input v-model="addForm.slug" placeholder="variant-slug" />
+        </div>
+        <div class="space-y-1.5 sm:col-span-2">
+          <Label>Описание</Label>
+          <MarkdownEditor
+            v-model="addForm.description"
+            placeholder="Описание варианта в Markdown…"
+          />
+        </div>
+        <div class="space-y-1.5">
+          <Label>Главная категория</Label>
+          <Combobox
+            :model-value="addForm.category_id"
+            @update:model-value="addForm.category_id = $event ?? ''"
+          >
+            <ComboboxAnchor class="w-full">
+              <ComboboxTrigger as-child>
+                <Button variant="outline" class="w-full justify-between">
+                  {{
+                    categories.items?.find((c) => c.id === addForm.category_id)?.name ||
+                    'Выберите категорию'
+                  }}
+                </Button>
+              </ComboboxTrigger>
+            </ComboboxAnchor>
+            <ComboboxList class="w-[var(--reka-combobox-trigger-width)]">
+              <ComboboxInput placeholder="Поиск категории..." />
+              <ComboboxEmpty>Категории не найдены</ComboboxEmpty>
+              <ComboboxGroup>
+                <ComboboxItem v-for="cat in categories.items" :key="cat.id" :value="cat.id ?? ''">
+                  {{ cat.name }}
+                  <ComboboxItemIndicator><Check class="ml-auto h-4 w-4" /></ComboboxItemIndicator>
+                </ComboboxItem>
+              </ComboboxGroup>
+            </ComboboxList>
+          </Combobox>
+        </div>
+        <div class="space-y-1.5">
+          <Label>Sort order</Label>
+          <Input type="number" v-model.number="addForm.sort_order" />
+        </div>
+        <div class="flex items-center gap-3 pt-5">
+          <Switch v-model="addForm.is_enable" />
+          <Label>Активен</Label>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
+        @click="showMetaAdd = !showMetaAdd"
+      >
+        {{ showMetaAdd ? '▾' : '▸' }} SEO / Meta
+      </button>
+      <div v-if="showMetaAdd" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <Label>Meta title</Label>
+          <Input v-model="addForm.meta_title" />
+        </div>
+        <div class="space-y-1.5">
+          <Label>Meta H1</Label>
+          <Input v-model="addForm.meta_h1" />
+        </div>
+        <div class="space-y-1.5">
+          <Label>Meta keyword</Label>
+          <Input v-model="addForm.meta_keyword" />
+        </div>
+        <div class="space-y-1.5">
+          <Label>Meta description</Label>
+          <Textarea v-model="addForm.meta_description" rows="2" />
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2">
+        <Button variant="outline" size="sm" @click="cancelAdd">
+          <X class="h-4 w-4 mr-1" />
+          Отмена
+        </Button>
+        <Button
+          size="sm"
+          @click="saveAdd"
+          :disabled="!addForm.model.trim() || !addForm.name.trim() || !addForm.slug.trim()"
+        >
+          <Check class="h-4 w-4 mr-1" />
+          Добавить
+        </Button>
+      </div>
+    </div>
+
     <!-- Existing variants -->
     <div v-for="variant in variants" :key="variant.id" class="border rounded-lg overflow-hidden">
       <!-- Collapsed row -->
@@ -541,136 +661,5 @@ const cancelAdd = () => {
         </div>
       </div>
     </div>
-
-    <!-- Add new variant form -->
-    <div v-if="showAddForm" class="border rounded-lg p-4 space-y-4 bg-muted/30">
-      <div class="font-medium">Новый вариант</div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="space-y-1.5">
-          <div class="flex items-center h-6">
-            <Label>Model</Label>
-          </div>
-          <Input v-model="addForm.model" placeholder="Модель варианта" />
-        </div>
-        <div class="space-y-1.5">
-          <div class="flex items-center h-6">
-            <Label>Название</Label>
-          </div>
-          <Input v-model="addForm.name" placeholder="Название варианта" />
-        </div>
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between h-6">
-            <Label>Slug</Label>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              class="h-6 gap-1 text-xs"
-              @click="addForm.slug = generateSlugUtil(addForm.name)"
-              :disabled="!addForm.name.trim()"
-            >
-              <Sparkles class="h-3 w-3" />
-              Generate
-            </Button>
-          </div>
-          <Input v-model="addForm.slug" placeholder="variant-slug" />
-        </div>
-        <div class="space-y-1.5 sm:col-span-2">
-          <Label>Описание</Label>
-          <MarkdownEditor
-            v-model="addForm.description"
-            placeholder="Описание варианта в Markdown…"
-          />
-        </div>
-        <div class="space-y-1.5">
-          <Label>Главная категория</Label>
-          <Combobox
-            :model-value="addForm.category_id"
-            @update:model-value="addForm.category_id = $event ?? ''"
-          >
-            <ComboboxAnchor class="w-full">
-              <ComboboxTrigger as-child>
-                <Button variant="outline" class="w-full justify-between">
-                  {{
-                    categories.items?.find((c) => c.id === addForm.category_id)?.name ||
-                    'Выберите категорию'
-                  }}
-                </Button>
-              </ComboboxTrigger>
-            </ComboboxAnchor>
-            <ComboboxList class="w-[var(--reka-combobox-trigger-width)]">
-              <ComboboxInput placeholder="Поиск категории..." />
-              <ComboboxEmpty>Категории не найдены</ComboboxEmpty>
-              <ComboboxGroup>
-                <ComboboxItem v-for="cat in categories.items" :key="cat.id" :value="cat.id ?? ''">
-                  {{ cat.name }}
-                  <ComboboxItemIndicator><Check class="ml-auto h-4 w-4" /></ComboboxItemIndicator>
-                </ComboboxItem>
-              </ComboboxGroup>
-            </ComboboxList>
-          </Combobox>
-        </div>
-        <div class="space-y-1.5">
-          <Label>Sort order</Label>
-          <Input type="number" v-model.number="addForm.sort_order" />
-        </div>
-        <div class="flex items-center gap-3 pt-5">
-          <Switch v-model="addForm.is_enable" />
-          <Label>Активен</Label>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        class="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"
-        @click="showMetaAdd = !showMetaAdd"
-      >
-        {{ showMetaAdd ? '▾' : '▸' }} SEO / Meta
-      </button>
-      <div v-if="showMetaAdd" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div class="space-y-1.5">
-          <Label>Meta title</Label>
-          <Input v-model="addForm.meta_title" />
-        </div>
-        <div class="space-y-1.5">
-          <Label>Meta H1</Label>
-          <Input v-model="addForm.meta_h1" />
-        </div>
-        <div class="space-y-1.5">
-          <Label>Meta keyword</Label>
-          <Input v-model="addForm.meta_keyword" />
-        </div>
-        <div class="space-y-1.5">
-          <Label>Meta description</Label>
-          <Textarea v-model="addForm.meta_description" rows="2" />
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2">
-        <Button variant="outline" size="sm" @click="cancelAdd">
-          <X class="h-4 w-4 mr-1" />
-          Отмена
-        </Button>
-        <Button
-          size="sm"
-          @click="saveAdd"
-          :disabled="!addForm.model.trim() || !addForm.name.trim() || !addForm.slug.trim()"
-        >
-          <Check class="h-4 w-4 mr-1" />
-          Добавить
-        </Button>
-      </div>
-    </div>
-
-    <Button
-      v-if="!showAddForm"
-      variant="outline"
-      size="sm"
-      class="w-full"
-      @click="showAddForm = true"
-    >
-      <Plus class="h-4 w-4 mr-2" />
-      Добавить вариант
-    </Button>
   </div>
 </template>
