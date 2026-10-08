@@ -1,4 +1,7 @@
-import type { UpdateOrderStatusRequest } from '@/utils/types/api/generatedApiGo'
+import type {
+  OrderEditLineResponse,
+  UpdateOrderStatusRequest,
+} from '@/utils/types/api/generatedApiGo'
 
 export const ORDER_STATUSES = [
   'new',
@@ -11,15 +14,27 @@ export const ORDER_STATUSES = [
   'refunded',
 ] as const
 
-export const PAYMENT_STATUSES = ['unpaid', 'paid', 'refunded', 'failed'] as const
+export const PAYMENT_STATUSES = [
+  'unpaid',
+  'paid',
+  'partially_refunded',
+  'refunded',
+  'failed',
+] as const
 
 export const PAYMENT_METHODS = ['card', 'cash', 'invoice'] as const
 
 export const EDITABLE_ORDER_STATUSES = ['new', 'pending'] as const
 
+/** Statuses that allow replacing order lines via PUT /items. */
+export const ITEMS_EDITABLE_ORDER_STATUSES = ['new', 'pending', 'paid', 'processing'] as const
+
+export const REFUND_STATUSES = ['pending', 'succeeded', 'failed'] as const
+
 export type OrderStatus = (typeof ORDER_STATUSES)[number]
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number]
 export type OrderStatusTarget = UpdateOrderStatusRequest['status']
+export type RefundStatus = (typeof REFUND_STATUSES)[number]
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
   new: 'Новый',
@@ -35,6 +50,7 @@ const ORDER_STATUS_LABELS: Record<string, string> = {
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   unpaid: 'Не оплачен',
   paid: 'Оплачен',
+  partially_refunded: 'Частичный возврат',
   refunded: 'Возврат',
   failed: 'Ошибка оплаты',
 }
@@ -73,7 +89,20 @@ const ORDER_STATUS_CLASS: Record<string, string> = {
 const PAYMENT_STATUS_CLASS: Record<string, string> = {
   unpaid: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   paid: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  partially_refunded: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   refunded: 'bg-muted text-muted-foreground',
+  failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+}
+
+const REFUND_STATUS_LABELS: Record<string, string> = {
+  pending: 'В обработке',
+  succeeded: 'Успешно',
+  failed: 'Ошибка',
+}
+
+const REFUND_STATUS_CLASS: Record<string, string> = {
+  pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+  succeeded: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
@@ -120,12 +149,102 @@ export function paymentStatusClass(status?: string) {
   return PAYMENT_STATUS_CLASS[status ?? ''] || 'bg-muted text-muted-foreground'
 }
 
+export function refundStatusLabel(status?: string) {
+  if (!status) return '—'
+  return REFUND_STATUS_LABELS[status] || status
+}
+
+export function refundStatusClass(status?: string) {
+  return REFUND_STATUS_CLASS[status ?? ''] || 'bg-muted text-muted-foreground'
+}
+
 export function nextOrderStatuses(status?: string): OrderStatusTarget[] {
   return ALLOWED_TRANSITIONS[status ?? ''] ?? []
 }
 
 export function isOrderEditable(status?: string) {
   return (EDITABLE_ORDER_STATUSES as readonly string[]).includes(status ?? '')
+}
+
+export function canEditOrderItems(status?: string) {
+  return (ITEMS_EDITABLE_ORDER_STATUSES as readonly string[]).includes(status ?? '')
+}
+
+/** Online refund via POST /admin/orders/{number}/refund when payment was captured. */
+export function canRefundOrder(
+  order?: { status?: string; payment_status?: string; payment_method?: string } | null,
+) {
+  if (!order) return false
+  if (order.payment_method === 'cash' || order.payment_method === 'invoice') return false
+  if (order.payment_status !== 'paid' && order.payment_status !== 'partially_refunded') {
+    return false
+  }
+  if (order.status === 'cancelled' || order.status === 'refunded') return false
+  return true
+}
+
+/** Overpayment still owed to the customer: paid − already refunded − current total. */
+export function orderRefundDue(order?: {
+  paid_total?: number
+  refunded_total?: number
+  grand_total?: number
+} | null) {
+  if (!order) return 0
+  const paid = order.paid_total ?? 0
+  const refunded = order.refunded_total ?? 0
+  const grand = order.grand_total ?? 0
+  return Math.max(0, paid - refunded - grand)
+}
+
+export function formatOrderActor(actor?: string) {
+  if (!actor) return '—'
+  if (actor.startsWith('admin:')) {
+    const id = actor.slice(6)
+    return id.length > 8 ? `Админ ${id.slice(0, 8)}…` : `Админ ${id}`
+  }
+  if (actor === 'system') return 'Система'
+  if (actor === 'customer') return 'Покупатель'
+  if (actor.startsWith('payment:')) return `Платёж (${actor.slice(8)})`
+  return actor
+}
+
+export type OrderEditLineDiff =
+  | { kind: 'removed'; line: OrderEditLineResponse }
+  | { kind: 'added'; line: OrderEditLineResponse }
+  | {
+      kind: 'changed'
+      before: OrderEditLineResponse
+      after: OrderEditLineResponse
+    }
+
+function lineKey(line: OrderEditLineResponse) {
+  return line.variant_id || line.sku || line.name || ''
+}
+
+export function diffOrderEditLines(
+  before: OrderEditLineResponse[] = [],
+  after: OrderEditLineResponse[] = [],
+): OrderEditLineDiff[] {
+  const beforeMap = new Map(before.map((line) => [lineKey(line), line]))
+  const afterMap = new Map(after.map((line) => [lineKey(line), line]))
+  const diffs: OrderEditLineDiff[] = []
+
+  for (const [key, line] of beforeMap) {
+    const next = afterMap.get(key)
+    if (!next) {
+      diffs.push({ kind: 'removed', line })
+      continue
+    }
+    if ((line.quantity ?? 0) !== (next.quantity ?? 0)) {
+      diffs.push({ kind: 'changed', before: line, after: next })
+    }
+  }
+
+  for (const [key, line] of afterMap) {
+    if (!beforeMap.has(key)) diffs.push({ kind: 'added', line })
+  }
+
+  return diffs
 }
 
 export function formatOrderMoney(value?: number | string, currency = 'RUB') {

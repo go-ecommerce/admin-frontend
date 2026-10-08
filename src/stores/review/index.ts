@@ -5,11 +5,12 @@ import { ref } from 'vue'
 import { useToast } from '@/components/ui/toast'
 import ReviewService from '@/services/ReviewService'
 import { extractApiErrorMessage } from '@/utils/apiError'
-import type { IProductReviewRequest, IProductReviewResponse } from '@/utils/types/api/apiGo'
 import type {
-  AdminProductReviewResponse,
-  UpdateProductReviewStatusRequest,
-} from '@/utils/types/api/generatedApiGo'
+  AdminProductReview,
+  IProductReviewRequest,
+  IProductReviewResponse,
+} from '@/utils/types/api/apiGo'
+import type { UpdateProductReviewStatusRequest } from '@/utils/types/api/generatedApiGo'
 
 const defaultPagination = { page: 1, page_size: 10, total: 0, last_page: 1 }
 
@@ -21,7 +22,7 @@ const defaultReviews: IProductReviewResponse = {
 export const useReviewStore = defineStore('review', () => {
   const isLoading = ref(false)
   const reviews = ref<IProductReviewResponse>(defaultReviews)
-  const currentReview = ref<AdminProductReviewResponse | null>(null)
+  const currentReview = ref<AdminProductReview | null>(null)
   const { toast } = useToast()
 
   const getReviews = async (payload: IProductReviewRequest): Promise<void> => {
@@ -59,7 +60,7 @@ export const useReviewStore = defineStore('review', () => {
   const updateReviewStatus = async (
     id: string,
     payload: UpdateProductReviewStatusRequest,
-  ): Promise<AdminProductReviewResponse> => {
+  ): Promise<AdminProductReview> => {
     try {
       isLoading.value = true
       const updated = await ReviewService.updateReviewStatus(id, payload)
@@ -105,7 +106,7 @@ export const useReviewStore = defineStore('review', () => {
     }
   }
 
-  const restoreReview = async (id: string): Promise<AdminProductReviewResponse> => {
+  const restoreReview = async (id: string): Promise<AdminProductReview> => {
     try {
       isLoading.value = true
       const restored = await ReviewService.restoreReview(id)

@@ -1,9 +1,10 @@
 import { api } from '@/api/api'
-import type { IProductReviewRequest, IProductReviewResponse } from '@/utils/types/api/apiGo'
 import type {
-  AdminProductReviewResponse,
-  UpdateProductReviewStatusRequest,
-} from '@/utils/types/api/generatedApiGo'
+  AdminProductReview,
+  IProductReviewRequest,
+  IProductReviewResponse,
+} from '@/utils/types/api/apiGo'
+import type { UpdateProductReviewStatusRequest } from '@/utils/types/api/generatedApiGo'
 
 function compactParams(payload: IProductReviewRequest): Partial<IProductReviewRequest> {
   return Object.fromEntries(
@@ -17,7 +18,7 @@ export default class ReviewService {
     return data
   }
 
-  public static async getReviewById(id: string): Promise<AdminProductReviewResponse> {
+  public static async getReviewById(id: string): Promise<AdminProductReview> {
     const { data }: any = await api.get(`/admin/product-reviews/${id}`)
     return data
   }
@@ -25,7 +26,7 @@ export default class ReviewService {
   public static async updateReviewStatus(
     id: string,
     payload: UpdateProductReviewStatusRequest,
-  ): Promise<AdminProductReviewResponse> {
+  ): Promise<AdminProductReview> {
     const { data }: any = await api.patch(`/admin/product-reviews/${id}/status`, payload)
     return data
   }
@@ -34,7 +35,7 @@ export default class ReviewService {
     await api.delete(`/admin/product-reviews/${id}`)
   }
 
-  public static async restoreReview(id: string): Promise<AdminProductReviewResponse> {
+  public static async restoreReview(id: string): Promise<AdminProductReview> {
     const { data }: any = await api.post(`/admin/product-reviews/${id}/restore`)
     return data
   }

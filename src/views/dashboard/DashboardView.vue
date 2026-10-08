@@ -404,7 +404,8 @@ onMounted(() => {
             </span>
           </button>
           <p class="pt-1 text-xs text-muted-foreground">
-            Выручка периода: {{ money(snapshot.revenuePeriod) }}. Считаются только оплаченные заказы.
+            Выручка периода: {{ money(snapshot.revenuePeriod) }}. Считается оплаченное за вычетом
+            возвратов.
           </p>
         </CardContent>
       </Card>

@@ -14,8 +14,7 @@ import {
   reviewStatusLabel,
   shortId,
 } from '@/utils/review'
-import type { IProductReviewResponse } from '@/utils/types/api/apiGo'
-import type { AdminProductReviewResponse } from '@/utils/types/api/generatedApiGo'
+import type { AdminProductReview, IProductReviewResponse } from '@/utils/types/api/apiGo'
 
 defineProps<{
   params: {
@@ -26,7 +25,7 @@ defineProps<{
   isLoading: boolean
 }>()
 
-const columns: ColumnDef<AdminProductReviewResponse>[] = [
+const columns: ColumnDef<AdminProductReview>[] = [
   {
     accessorKey: 'rating',
     header: ({ column }) => h(DataTableColumnHeader, { column, title: 'Оценка' }),

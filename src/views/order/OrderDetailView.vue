@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CornerUpLeft, Save } from 'lucide-vue-next'
+import { CornerUpLeft, Pencil, RotateCcw, Save } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 
 import { computed, ref, watch } from 'vue'
@@ -7,9 +7,20 @@ import { useRoute, useRouter } from 'vue-router'
 
 import OrderCitySelect from '@/components/order/OrderCitySelect.vue'
 import OrderDeliveryMap from '@/components/order/OrderDeliveryMap.vue'
+import OrderHistoryPanel from '@/components/order/OrderHistoryPanel.vue'
+import OrderItemsEditor from '@/components/order/OrderItemsEditor.vue'
 import OrderPickupMap from '@/components/order/OrderPickupMap.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -23,16 +34,20 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/toast/use-toast'
 import DeliveryService from '@/services/DeliveryService'
 import { useOrderStore } from '@/stores/order'
+import { classifyRefundError } from '@/utils/apiError'
 import { cityCoordinates, cityKey, cityLabel } from '@/utils/city'
 import { deliveryPointAddress } from '@/utils/deliveryPoint'
 import { deliveryMethodTitle, pointsMapUi, resolveDeliveryMethod } from '@/utils/deliveryMethod'
 import { fileSrc } from '@/utils/media'
 import {
   PAYMENT_METHODS,
+  canEditOrderItems,
+  canRefundOrder,
   formatOrderDate,
   formatOrderMoney,
   isOrderEditable,
   nextOrderStatuses,
+  orderRefundDue,
   orderSourceLabel,
   orderStatusClass,
   orderStatusLabel,
@@ -44,6 +59,8 @@ import {
 import type { OrderStatusTarget } from '@/utils/order'
 import { STORE_PICKUP, isStorePickupCity } from '@/utils/pickup'
 import type {
+  AdminOrderItemsEditResponse,
+  AdminRefundOrderRequest,
   AdminUpdateOrderRequest,
   CityResponse,
   DeliveryMethodResponse,
@@ -55,8 +72,9 @@ const route = useRoute()
 const router = useRouter()
 const { toast } = useToast()
 const orderStore = useOrderStore()
-const { currentOrder, isLoading } = storeToRefs(orderStore)
-const { getOrderByNumber, updateOrder, updateOrderStatus } = orderStore
+const { currentOrder, isLoading, refunds, edits, historyLoading } = storeToRefs(orderStore)
+const { getOrderByNumber, loadOrderHistory, updateOrder, updateOrderStatus, refundOrder } =
+  orderStore
 
 const NONE = '__none__'
 
@@ -68,11 +86,44 @@ const orderNumber = computed(() => {
 
 const editable = computed(() => isOrderEditable(currentOrder.value?.status))
 const isQuickNew = computed(() => currentOrder.value?.status === 'new')
+const canRefund = computed(() => canRefundOrder(currentOrder.value))
+const canEditItems = computed(() => canEditOrderItems(currentOrder.value?.status))
+const refundDue = computed(() => orderRefundDue(currentOrder.value))
+const editingItems = ref(false)
 
-const nextStatuses = computed(() => nextOrderStatuses(currentOrder.value?.status))
+const nextStatuses = computed(() => {
+  const statuses = nextOrderStatuses(currentOrder.value?.status)
+  // Online refunds go through POST /refund, not status patch.
+  if (canRefund.value) return statuses.filter((status) => status !== 'refunded')
+  return statuses
+})
 const nextStatus = ref<OrderStatusTarget | ''>('')
 const statusComment = ref('')
 const statusPaymentMethod = ref(NONE)
+
+const refundOpen = ref(false)
+const refundFull = ref(false)
+const refundReason = ref('')
+const refundIdempotencyKey = ref('')
+const refundError = ref('')
+const refundCanRetry = ref(false)
+const refundSubmitting = ref(false)
+
+const openRefundModal = () => {
+  refundIdempotencyKey.value = crypto.randomUUID()
+  refundFull.value = refundDue.value <= 0
+  refundReason.value = ''
+  refundError.value = ''
+  refundCanRetry.value = false
+  refundOpen.value = true
+}
+
+watch(refundOpen, (open) => {
+  if (!open) {
+    refundError.value = ''
+    refundCanRetry.value = false
+  }
+})
 
 const deliveryMethods = ref<DeliveryMethodResponse[]>([])
 const methodsError = ref('')
@@ -230,11 +281,34 @@ const loadOrder = async () => {
   }
   try {
     await getOrderByNumber(orderNumber.value)
+    editingItems.value = false
     resetStatusForm()
     resetEditForm()
+    void loadOrderHistory(orderNumber.value)
   } catch {
     await router.push({ name: 'order' })
   }
+}
+
+const onItemsSaved = async (result: AdminOrderItemsEditResponse) => {
+  editingItems.value = false
+  resetStatusForm()
+  resetEditForm()
+  if (currentOrder.value?.number) void loadOrderHistory(currentOrder.value.number)
+
+  const due = result.refund_due ?? 0
+  if (due > 0) {
+    toast({
+      title: '✅ Состав обновлён',
+      description: `Переплата ${money(due)}. Оформите возврат в блоке статуса.`,
+      variant: 'success',
+    })
+    return
+  }
+  toast({
+    title: result.changed === false ? 'Состав без изменений' : '✅ Состав обновлён',
+    variant: 'success',
+  })
 }
 
 watch(orderNumber, loadOrder, { immediate: true })
@@ -397,6 +471,37 @@ const saveStatus = async () => {
     // toast is shown in the store
   }
 }
+
+const submitRefund = async () => {
+  if (!currentOrder.value?.number || !canRefund.value || !refundIdempotencyKey.value) return
+
+  const payload: AdminRefundOrderRequest = {
+    full: refundFull.value,
+  }
+  const reason = refundReason.value.trim()
+  if (reason) payload.reason = reason
+
+  refundSubmitting.value = true
+  refundError.value = ''
+  refundCanRetry.value = false
+
+  try {
+    await refundOrder(currentOrder.value.number, payload, refundIdempotencyKey.value)
+    toast({ title: '✅ Возврат оформлен', variant: 'success' })
+    refundOpen.value = false
+    resetStatusForm()
+    resetEditForm()
+    void loadOrderHistory(currentOrder.value.number)
+  } catch (error: unknown) {
+    const classified = classifyRefundError(error)
+    refundError.value = classified.message
+    // Keep the same Idempotency-Key for pending / unknown outcome retries.
+    refundCanRetry.value =
+      classified.kind === 'unknown_status' || classified.kind === 'pending'
+  } finally {
+    refundSubmitting.value = false
+  }
+}
 </script>
 
 <template>
@@ -436,60 +541,122 @@ const saveStatus = async () => {
       <div class="lg:col-span-2 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Состав заказа</CardTitle>
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <CardTitle>Состав заказа</CardTitle>
+                <CardDescription v-if="canEditItems && !editingItems">
+                  Можно менять позиции, пока заказ в работе.
+                </CardDescription>
+              </div>
+              <Button
+                v-if="canEditItems && !editingItems"
+                type="button"
+                variant="outline"
+                size="sm"
+                class="h-7 gap-1 shrink-0"
+                @click="editingItems = true"
+              >
+                <Pencil class="h-3.5 w-3.5" />
+                <span class="sr-only sm:not-sr-only sm:whitespace-nowrap">Изменить</span>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div class="divide-y rounded-md border">
-              <div
-                v-for="(item, index) in currentOrder.items ?? []"
-                :key="item.variant_id || item.product_id || index"
-                class="flex items-center gap-3 p-3"
-              >
-                <img
-                  v-if="fileSrc(item.image_path)"
-                  :src="fileSrc(item.image_path)"
-                  :alt="item.name"
-                  class="size-12 rounded border object-cover shrink-0"
-                />
-                <div class="flex-1 min-w-0">
-                  <div class="text-sm font-medium truncate">{{ item.name }}</div>
-                  <div class="text-xs text-muted-foreground truncate">
-                    {{ item.sku || item.slug || '—' }}
-                    · {{ item.quantity }} × {{ money(item.unit_price) }}
+            <OrderItemsEditor
+              v-if="editingItems"
+              :order="currentOrder"
+              @cancel="editingItems = false"
+              @saved="onItemsSaved"
+            />
+            <template v-else>
+              <div class="divide-y rounded-md border">
+                <div
+                  v-for="(item, index) in currentOrder.items ?? []"
+                  :key="item.variant_id || item.product_id || index"
+                  class="flex items-center gap-3 p-3"
+                >
+                  <img
+                    v-if="fileSrc(item.image_path)"
+                    :src="fileSrc(item.image_path)"
+                    :alt="item.name"
+                    class="size-12 rounded border object-cover shrink-0"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium truncate">{{ item.name }}</div>
+                    <div class="text-xs text-muted-foreground truncate">
+                      {{ item.sku || item.slug || '—' }}
+                      · {{ item.quantity }} × {{ money(item.unit_price) }}
+                    </div>
                   </div>
+                  <div class="text-sm font-medium shrink-0">{{ money(item.line_total) }}</div>
                 </div>
-                <div class="text-sm font-medium shrink-0">{{ money(item.line_total) }}</div>
+                <div
+                  v-if="!currentOrder.items?.length"
+                  class="p-6 text-sm text-muted-foreground text-center"
+                >
+                  В заказе нет позиций
+                </div>
               </div>
-              <div
-                v-if="!currentOrder.items?.length"
-                class="p-6 text-sm text-muted-foreground text-center"
-              >
-                В заказе нет позиций
-              </div>
-            </div>
 
-            <div class="mt-4 space-y-1 text-sm">
-              <div class="flex justify-between">
-                <span class="text-muted-foreground">Подытог</span>
-                <span>{{ money(currentOrder.subtotal) }}</span>
+              <div class="mt-4 space-y-1 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-muted-foreground">Подытог</span>
+                  <span>{{ money(currentOrder.subtotal) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-muted-foreground">Скидка</span>
+                  <span>{{ money(currentOrder.discount_total) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-muted-foreground">Доставка</span>
+                  <span>{{ money(currentOrder.shipping_total) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-muted-foreground">Налог</span>
+                  <span>{{ money(currentOrder.tax_total) }}</span>
+                </div>
+                <div class="flex justify-between font-medium pt-2 border-t">
+                  <span>Итого</span>
+                  <span>{{ money(currentOrder.grand_total) }}</span>
+                </div>
+                <div
+                  v-if="currentOrder.paid_total != null"
+                  class="flex justify-between text-muted-foreground"
+                >
+                  <span>Оплачено</span>
+                  <span>{{ money(currentOrder.paid_total) }}</span>
+                </div>
+                <div
+                  v-if="(currentOrder.refunded_total ?? 0) > 0"
+                  class="flex justify-between text-muted-foreground"
+                >
+                  <span>Возвращено</span>
+                  <span>{{ money(currentOrder.refunded_total) }}</span>
+                </div>
+                <div
+                  v-if="refundDue > 0"
+                  class="flex justify-between text-amber-700 dark:text-amber-400"
+                >
+                  <span>К возврату (переплата)</span>
+                  <span>{{ money(refundDue) }}</span>
+                </div>
               </div>
-              <div class="flex justify-between">
-                <span class="text-muted-foreground">Скидка</span>
-                <span>{{ money(currentOrder.discount_total) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-muted-foreground">Доставка</span>
-                <span>{{ money(currentOrder.shipping_total) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-muted-foreground">Налог</span>
-                <span>{{ money(currentOrder.tax_total) }}</span>
-              </div>
-              <div class="flex justify-between font-medium pt-2 border-t">
-                <span>Итого</span>
-                <span>{{ money(currentOrder.grand_total) }}</span>
-              </div>
-            </div>
+            </template>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>История</CardTitle>
+            <CardDescription>Возвраты и правки состава заказа.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OrderHistoryPanel
+              :refunds="refunds"
+              :edits="edits"
+              :currency="currentOrder.currency"
+              :loading="historyLoading"
+            />
           </CardContent>
         </Card>
 
@@ -728,6 +895,97 @@ const saveStatus = async () => {
             <p v-else class="text-sm text-muted-foreground pt-2 border-t">
               Дальнейшие переходы недоступны.
             </p>
+
+            <div v-if="canRefund" class="grid gap-2 pt-2 border-t">
+              <p class="text-sm text-muted-foreground">
+                <template v-if="refundDue > 0">
+                  Переплата {{ money(refundDue) }} — можно вернуть без полного закрытия заказа.
+                </template>
+                <template v-else>
+                  Полный возврат отправит остаток оплаты на эквайер и переведёт заказ в «Возврат».
+                </template>
+              </p>
+              <Button
+                variant="destructive"
+                class="w-full gap-2"
+                :disabled="isLoading"
+                @click="openRefundModal"
+              >
+                <RotateCcw class="h-4 w-4" />
+                Оформить возврат
+              </Button>
+              <Dialog v-model:open="refundOpen">
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Возврат по заказу №{{ currentOrder.number }}</DialogTitle>
+                    <DialogDescription>
+                      Сумму считает сервер. По умолчанию возвращается переплата; полный возврат —
+                      весь остаток оплаты.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div class="grid gap-4 py-2">
+                    <label class="flex items-start gap-3 text-sm">
+                      <Checkbox
+                        :checked="refundFull"
+                        class="mt-0.5"
+                        @update:checked="(v: boolean | 'indeterminate') => (refundFull = v === true)"
+                      />
+                      <span>
+                        <span class="font-medium">Полный возврат</span>
+                        <span class="block text-muted-foreground">
+                          Вернуть всё, что ещё не возвращено
+                          <template v-if="currentOrder.paid_total != null">
+                            (оплачено {{ money(currentOrder.paid_total) }}, уже возвращено
+                            {{ money(currentOrder.refunded_total) }})
+                          </template>
+                          .
+                        </span>
+                      </span>
+                    </label>
+                    <p v-if="!refundFull" class="text-sm text-muted-foreground">
+                      {{
+                        refundDue > 0
+                          ? `Будет возвращена переплата: ${money(refundDue)}.`
+                          : 'Переплаты нет — отметьте полный возврат или сначала измените состав.'
+                      }}
+                    </p>
+                    <div class="grid gap-1.5">
+                      <Label for="refund_reason">Причина</Label>
+                      <Textarea
+                        id="refund_reason"
+                        v-model="refundReason"
+                        rows="3"
+                        maxlength="500"
+                        placeholder="Необязательно"
+                      />
+                    </div>
+                    <p v-if="refundError" class="text-sm text-destructive">{{ refundError }}</p>
+                  </div>
+                  <DialogFooter class="gap-2 sm:gap-2">
+                    <Button
+                      variant="outline"
+                      :disabled="refundSubmitting"
+                      @click="refundOpen = false"
+                    >
+                      Отмена
+                    </Button>
+                    <Button
+                      :variant="refundCanRetry ? 'secondary' : 'destructive'"
+                      :disabled="refundSubmitting || isLoading"
+                      @click="submitRefund"
+                    >
+                      {{
+                        refundSubmitting
+                          ? 'Отправка…'
+                          : refundCanRetry
+                            ? 'Повторить'
+                            : 'Вернуть'
+                      }}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
           </CardContent>
         </Card>
 

@@ -72,6 +72,7 @@ export const mapDashboardResponse = (
   ordersTotal: data.orders?.total ?? 0,
   unpaid: data.orders?.by_payment_status?.unpaid ?? 0,
   statusCounts: {
+    new: 0,
     pending: data.orders?.by_status?.pending ?? 0,
     paid: data.orders?.by_status?.paid ?? 0,
     processing: data.orders?.by_status?.processing ?? 0,
@@ -83,6 +84,7 @@ export const mapDashboardResponse = (
   paymentCounts: {
     unpaid: data.orders?.by_payment_status?.unpaid ?? 0,
     paid: data.orders?.by_payment_status?.paid ?? 0,
+    partially_refunded: data.orders?.by_payment_status?.partially_refunded ?? 0,
     refunded: data.orders?.by_payment_status?.refunded ?? 0,
     failed: data.orders?.by_payment_status?.failed ?? 0,
   },

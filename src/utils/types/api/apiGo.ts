@@ -1,14 +1,23 @@
 import type {
   AdminOrderResponse,
-  AdminProductReviewResponse,
   AttributeGroupResponse,
   AttributeResponse,
   AttributeValueResponse,
   CategoryResponse,
   CollectionResponse,
   ProductResponse,
+  ProductReviewResponse,
   ProductVariantListItem,
 } from '@/utils/types/api/generatedApiGo'
+
+/** Admin list/detail may include soft-delete metadata not in the public schema. */
+export type AdminProductReview = ProductReviewResponse & {
+  deleted_at?: string
+  order_id?: string
+  product_id?: string
+  product_name?: string
+  variant_id?: string
+}
 
 // Product Attributes API response types
 export interface ProductAttributeValue {
@@ -98,7 +107,7 @@ export interface IProductReviewRequest {
 }
 
 export interface IProductReviewResponse {
-  items: AdminProductReviewResponse[]
+  items: AdminProductReview[]
   pagination: IPagination
 }
 

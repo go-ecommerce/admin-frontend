@@ -40,6 +40,22 @@ export interface AddCartItemRequest {
   variant_id: string;
 }
 
+export interface AdminOrderItemsEditResponse {
+  changed?: boolean;
+  order?: AdminOrderResponse;
+  previous_grand_total?: number;
+  refund_due?: number;
+}
+
+export interface AdminOrderLineRequest {
+  /**
+   * @min 1
+   * @max 100000
+   */
+  quantity: number;
+  variant_id: string;
+}
+
 export interface AdminOrderResponse {
   cancelled_at?: string;
   comment?: string;
@@ -52,9 +68,11 @@ export interface AdminOrderResponse {
   items?: OrderItemResponse[];
   number?: number;
   paid_at?: string;
+  paid_total?: number;
   payment_method?: string;
   payment_status?: string;
   phone?: string;
+  refunded_total?: number;
   shipping?: OrderShippingResponse;
   shipping_total?: number;
   source?: string;
@@ -62,6 +80,33 @@ export interface AdminOrderResponse {
   subtotal?: number;
   tax_total?: number;
   user_id?: string;
+  version?: number;
+}
+
+export interface AdminPreviewOrderItemsRequest {
+  /**
+   * @maxItems 200
+   * @minItems 1
+   */
+  lines: AdminOrderLineRequest[];
+}
+
+export interface AdminRefundOrderRequest {
+  full?: boolean;
+  /** @maxLength 500 */
+  reason?: string;
+}
+
+export interface AdminUpdateOrderItemsRequest {
+  /** @maxLength 2000 */
+  comment?: string;
+  expected_grand_total: number;
+  expected_version: number;
+  /**
+   * @maxItems 200
+   * @minItems 1
+   */
+  lines: AdminOrderLineRequest[];
 }
 
 export interface AdminUpdateOrderRequest {
@@ -535,7 +580,6 @@ export interface CreateProductVariantRequest {
   meta_h1?: string;
   meta_keyword?: string;
   meta_title?: string;
-  model: string;
   name: string;
   slug: string;
   sort_order?: number;
@@ -576,6 +620,7 @@ export interface DashboardOrders {
 export interface DashboardOrdersByPaymentStatus {
   failed?: number;
   paid?: number;
+  partially_refunded?: number;
   refunded?: number;
   unpaid?: number;
 }
@@ -668,6 +713,20 @@ export interface ImageDTO {
   id?: string;
   presets?: Record<string, Record<string, string>>;
   width?: number;
+}
+
+export interface InitPaymentRequest {
+  /**
+   * Provider selects the acquirer, e.g. "tbank". More values are added as
+   * more providers are wired up.
+   */
+  provider: "tbank";
+}
+
+export interface JSONResponseAdminOrderItemsEditResponse {
+  code?: number;
+  data?: AdminOrderItemsEditResponse;
+  message?: string;
 }
 
 export interface JSONResponseAdminOrderResponse {
@@ -772,6 +831,12 @@ export interface JSONResponseOrderResponse {
   message?: string;
 }
 
+export interface JSONResponsePaymentResponse {
+  code?: number;
+  data?: PaymentResponse;
+  message?: string;
+}
+
 export interface JSONResponseProductResponse {
   code?: number;
   data?: ProductResponse;
@@ -793,6 +858,12 @@ export interface JSONResponseProductVariantResponse {
 export interface JSONResponseProductWithMediumResponse {
   code?: number;
   data?: ProductWithMediumResponse;
+  message?: string;
+}
+
+export interface JSONResponseResolveResponse {
+  code?: number;
+  data?: ResolveResponse;
   message?: string;
 }
 
@@ -952,9 +1023,27 @@ export interface JSONResponseArrayDeliveryProviderResponse {
   message?: string;
 }
 
+export interface JSONResponseArrayOrderEditResponse {
+  code?: number;
+  data?: OrderEditResponse[];
+  message?: string;
+}
+
+export interface JSONResponseArrayPaymentMethodResponse {
+  code?: number;
+  data?: PaymentMethodResponse[];
+  message?: string;
+}
+
 export interface JSONResponseArrayProductVariantResponse {
   code?: number;
   data?: ProductVariantResponse[];
+  message?: string;
+}
+
+export interface JSONResponseArrayRefundResponse {
+  code?: number;
+  data?: RefundResponse[];
   message?: string;
 }
 
@@ -1028,6 +1117,26 @@ export interface MediumResponse {
   width?: number;
 }
 
+export interface OrderEditLineResponse {
+  line_total?: number;
+  name?: string;
+  quantity?: number;
+  sku?: string;
+  unit_price?: number;
+  variant_id?: string;
+}
+
+export interface OrderEditResponse {
+  actor?: string;
+  comment?: string;
+  created_at?: string;
+  grand_total_after?: number;
+  grand_total_before?: number;
+  id?: string;
+  lines_after?: OrderEditLineResponse[];
+  lines_before?: OrderEditLineResponse[];
+}
+
 export interface OrderItemResponse {
   image_path?: string;
   line_total?: number;
@@ -1055,6 +1164,7 @@ export interface OrderResponse {
   payment_method?: string;
   payment_status?: string;
   phone?: string;
+  refunded_total?: number;
   shipping?: OrderShippingResponse;
   shipping_total?: number;
   source?: string;
@@ -1075,6 +1185,27 @@ export interface OrderShippingResponse {
   provider?: string;
   recipient?: string;
   tariff_code?: string;
+}
+
+export interface PaymentMethodResponse {
+  code?: string;
+  enabled?: boolean;
+  /** cash | online */
+  kind?: string;
+  provider?: string;
+  title?: string;
+}
+
+export interface PaymentResponse {
+  amount?: number;
+  created_at?: string;
+  currency?: string;
+  id?: string;
+  order_id?: string;
+  payment_url?: string;
+  provider?: string;
+  refunded_amount?: number;
+  status?: string;
 }
 
 export interface ProductResponse {
@@ -1152,6 +1283,22 @@ export interface ProductVariantResponse {
 export interface ProductWithMediumResponse {
   images?: GithubComStickproGoStoreInternalDtoImageDTO[];
   product?: ProductResponse;
+}
+
+export interface RefundResponse {
+  actor?: string;
+  amount?: number;
+  created_at?: string;
+  id?: string;
+  payment_id?: string;
+  reason?: string;
+  status?: string;
+  updated_at?: string;
+}
+
+export interface ResolveResponse {
+  data?: any;
+  type?: string;
 }
 
 export interface ResponseWithFullPaginationAdminOrderResponse {
@@ -1397,7 +1544,6 @@ export interface UpdateProductVariantRequest {
   meta_h1?: string;
   meta_keyword?: string;
   meta_title?: string;
-  model: string;
   name?: string;
   slug?: string;
   sort_order?: number;
@@ -1558,6 +1704,7 @@ export interface GithubComStickproGoStoreInternalStorageRepositoryRepositoryProd
   manufacturer_id?: UuidNullUUID;
   minimum?: number;
   mpn?: PgtypeText;
+  name?: string;
   price_business?: number;
   price_retail?: number;
   price_wholesale?: number;
